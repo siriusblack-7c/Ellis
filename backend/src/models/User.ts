@@ -16,8 +16,20 @@ export interface IUser extends Document {
 
 const UserSchema: Schema = new Schema(
     {
+        avatar: { type: String },
+        addressStreet: { type: String },
+        addressCity: { type: String },
+        addressState: { type: String },
+        addressZip: { type: String },
+        addressCountry: { type: String },
+        emergencyContactName: { type: String },
+        emergencyContactPhone: { type: String },
+        emergencyContactRelationship: { type: String },
         firstName: { type: String, required: true },
         lastName: { type: String, required: true },
+        birthDate: { type: Date },
+        gender: { type: String, enum: ['male', 'female', 'other'], default: 'other' },
+        bio: { type: String },
         email: { type: String, required: true, unique: true, lowercase: true },
         password: { type: String, required: true, select: false },
         phoneNumber: { type: String },

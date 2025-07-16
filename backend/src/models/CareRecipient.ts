@@ -1,31 +1,40 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export type CareNeed =
-    | 'personal_care'
+    | 'personalCare'
     | 'companionship'
-    | 'meal_preparation'
-    | 'medication_management'
-    | 'mobility_assistance'
-    | 'dementia_care'
-    | 'post_surgery_care'
-    | 'chronic_condition_care';
+    | 'mealPreparation'
+    | 'medicationManagement'
+    | 'mobilityAssistance'
+    | 'dementiaCare'
+    | 'postSurgeryCare'
+    | 'chronicConditionCare'
+    | 'lightHousekeeping'
+    | 'transportation'
+    | 'medicalAppointments';
 
 export interface ICareRecipient extends Document {
-    client_id: mongoose.Types.ObjectId;
+    clientId: mongoose.Types.ObjectId;
     name: string;
     age: number;
-    care_needs: CareNeed[];
     location: string;
-    special_requirements?: string;
-    emergency_contact_name?: string;
-    emergency_contact_phone?: string;
+    careNeeds: CareNeed[];
+    medicalConditions: string[];
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    specialRequirements?: string;
+    avatar?: string;
+    mobilityLevel?: string;
+    preferredLanguage?: string;
+    allergies: string[];
+    carePlan: string;
 }
 
 const CareRecipientSchema: Schema = new Schema(
     {
-        client_id: {
+        clientId: {
             type: Schema.Types.ObjectId,
-            ref: 'Profile',
+            ref: 'User',
             required: true,
         },
         name: {
@@ -36,27 +45,45 @@ const CareRecipientSchema: Schema = new Schema(
             type: Number,
             required: true,
         },
-        care_needs: {
-            type: [String],
-            enum: [
-                'personal_care', 'companionship', 'meal_preparation',
-                'medication_management', 'mobility_assistance', 'dementia_care',
-                'post_surgery_care', 'chronic_condition_care'
-            ],
-            required: true,
-        },
         location: {
             type: String,
             required: true,
         },
-        special_requirements: {
+        careNeeds: {
+            type: [String],
+            enum: [
+                'personalCare', 'companionship', 'mealPreparation',
+                'medicationManagement', 'mobilityAssistance', 'dementiaCare',
+                'postSurgeryCare', 'chronicConditionCare', 'lightHousekeeping',
+                'transportation', 'medicalAppointments'
+            ],
+        },
+        medicalConditions: {
+            type: [String],
+        },
+        emergencyContactName: {
             type: String,
         },
-        emergency_contact_name: {
+        emergencyContactPhone: {
             type: String,
         },
-        emergency_contact_phone: {
+        specialRequirements: {
             type: String,
+        },
+        avatar: {
+            type: String,
+        },
+        mobilityLevel: {
+            type: String,
+        },
+        preferredLanguage: {
+            type: String,
+        },
+        allergies: {
+            type: [String],
+        },
+        carePlan: {
+            type: String
         },
     },
     {

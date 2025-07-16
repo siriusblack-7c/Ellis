@@ -5,7 +5,8 @@ import { findUserById } from '../data-access/user';
 import { IUser } from '../models/User';
 
 export interface IRequest extends Request {
-    user?: IUser;
+    user?: IUser | null;
+    file?: Express.Multer.File;
 }
 
 export const protect = async (req: IRequest, res: Response, next: NextFunction) => {
@@ -23,7 +24,7 @@ export const protect = async (req: IRequest, res: Response, next: NextFunction) 
             const decoded = jwt.verify(token, config.jwtSecret) as { id: string };
 
             // Get user from the token
-            req.user = await findUserById(decoded.id).select('-password');
+            req.user = await findUserById(decoded.id);
 
             if (!req.user) {
                 return res.status(401).json({ message: 'Not authorized, user not found' });
@@ -42,10 +43,10 @@ export const protect = async (req: IRequest, res: Response, next: NextFunction) 
 };
 
 export const authorize = (...roles: string[]) => {
-  return (req: IRequest, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'User role not authorized' });
-    }
-    next();
-  };
+    return (req: IRequest, res: Response, next: NextFunction) => {
+        if (!req.user || !roles.includes(req.user.role)) {
+            return res.status(403).json({ message: 'User role not authorized' });
+        }
+        next();
+    };
 }; 

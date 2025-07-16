@@ -5,8 +5,10 @@ import http from 'http';
 import { Server } from 'socket.io';
 import connectDB from './config/db';
 import authRoutes from './routes/authRoutes';
-import careRecipientRoutes from './routes/careRecipientRoutes';
+import recipientRoutes from './routes/recipientRoutes';
 import caregiverApplicationRoutes from './routes/caregiverApplicationRoutes';
+import path from 'path';
+import { protect } from './middlewares/authMiddleware';
 
 dotenv.config();
 
@@ -26,9 +28,17 @@ const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files statically
+app.use('/uploads', express.static('uploads'));
+
+app.get('/', (req, res) => {
+    res.send('API is running...');
+});
 
 app.use('/api/auth', authRoutes);
-app.use('/api/recipients', careRecipientRoutes);
+app.use('/api/recipients', recipientRoutes);
 app.use('/api/applications', caregiverApplicationRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {

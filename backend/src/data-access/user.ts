@@ -11,4 +11,8 @@ export const findUserById = async (id: string): Promise<IUser | null> => {
 export const createUser = async (userData: Partial<IUser>): Promise<IUser> => {
     const user = new User(userData);
     return user.save();
-}; 
+};
+
+export const updateUser = async (id: string, userData: Partial<IUser>): Promise<IUser | null> => {
+    return User.findByIdAndUpdate(id, userData, { new: true });
+} 

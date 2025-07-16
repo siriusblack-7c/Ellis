@@ -61,4 +61,35 @@ export const login = async (userData: Partial<IUser>) => {
     } else {
         throw new Error('Invalid credentials');
     }
-}; 
+};
+
+export const updateUserProfile = async (userId: string, userData: Partial<IUser>) => {
+    const updatedUser = await userDataAccess.updateUser(userId, userData);
+    if (!updatedUser) {
+        throw new Error('User not found');
+    }
+    return updatedUser;
+};
+
+export const changePassword = async (userId: string, oldPassword?: string, newPassword?: string) => {
+    if (!oldPassword || !newPassword) {
+        throw new Error('Please provide old and new passwords');
+    }
+
+    const user = await userDataAccess.findUserById(userId);
+
+    if (!user || !(await (user as any).comparePassword(oldPassword))) {
+        throw new Error('Invalid credentials');
+    }
+
+    user.password = newPassword;
+    await user.save();
+};  
+
+export const getProfile = async (userId: string) => {
+    const user = await userDataAccess.findUserById(userId);
+    if (!user) {
+        throw new Error('User not found');
+    }
+    return user;
+};
