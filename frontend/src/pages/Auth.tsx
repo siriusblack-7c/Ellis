@@ -8,14 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import axios from '../lib/axios'; // Import the configured axios instance
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { login, register, isAuthenticated, user } = useAuth();
   const [loading, setLoading] = useState(false);
 
   // Form states
@@ -23,8 +22,8 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [userType, setUserType] = useState<"client" | "caregiver">("client");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [role, setRole] = useState<"client" | "caregiver">("client");
 
   const mode = searchParams.get("mode") || "signin";
 
@@ -35,35 +34,12 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      const response = await axios.post('/auth/login', {
-        email,
-        password,
-      });
-
-      const { data } = response;
-
-      // Use context to login
-      login({
-        email: data.email,
-        user_type: data.role,
-        ...data
-      }, data.token);
-
+      await login(email, password);
       toast({
         title: "Welcome back!",
         description: "You have been signed in successfully.",
       });
-
-      // Navigate based on user type
-      if (data.role === "admin") {
-        navigate("/admin-dashboard");
-      } else if (data.role === "caregiver") {
-        navigate("/caregiver-dashboard");
-      } else {
-        navigate("/client-dashboard");
-      }
     } catch (error: any) {
       toast({
         title: "Sign in failed",
@@ -78,37 +54,19 @@ export default function Auth() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      const response = await axios.post('/auth/register', {
+      await register({
         firstName,
         lastName,
         email,
         password,
-        phoneNumber: phone,
-        role: userType,
+        phoneNumber,
+        role,
       });
-
-      const { data } = response;
-
-      // Use context to login
-      login({
-        email: data.email,
-        user_type: data.role,
-        ...data
-      }, data.token);
-
       toast({
         title: "Account created!",
         description: "Welcome to Ellis Global Care! You can now access your dashboard.",
       });
-
-      // Navigate based on user type
-      if (data.role === "caregiver") {
-        navigate("/caregiver-dashboard");
-      } else {
-        navigate("/client-dashboard");
-      }
     } catch (error: any) {
       toast({
         title: "Sign up failed",
@@ -119,6 +77,19 @@ export default function Auth() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Use role from user object for navigation
+      if (user?.role === "admin") {
+        navigate("/admin-dashboard");
+      } else if (user?.role === "caregiver") {
+        navigate("/caregiver-dashboard");
+      } else {
+        navigate("/client-dashboard");
+      }
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -192,7 +163,7 @@ export default function Auth() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="userType">I am a</Label>
-                      <Select value={userType} onValueChange={(value: "client" | "caregiver") => setUserType(value)}>
+                      <Select value={role} onValueChange={(value: "client" | "caregiver") => setRole(value)}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -218,8 +189,8 @@ export default function Auth() {
                       <Input
                         id="phone"
                         type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
                         required
                       />
                     </div>

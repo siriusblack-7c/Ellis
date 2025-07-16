@@ -22,7 +22,7 @@ export default function ClientDashboard() {
 
               <div className="grid gap-6">
                 <ClientActionCards />
-                <RecentRecipientsCard />
+                {/* <RecentRecipientsCard /> */}
               </div>
             </div>
           </div>

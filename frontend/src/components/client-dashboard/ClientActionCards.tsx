@@ -34,7 +34,7 @@ export default function ClientActionCards() {
                 </CardContent>
             </Card>
 
-            <Card>
+            {/* <Card>
                 <CardHeader>
                     <CardTitle>My Bookings</CardTitle>
                     <CardDescription>
@@ -46,7 +46,7 @@ export default function ClientActionCards() {
                         View Bookings
                     </Button>
                 </CardContent>
-            </Card>
+            </Card> */}
         </>
     );
 } 

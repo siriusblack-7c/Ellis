@@ -20,8 +20,6 @@ export interface ICareRecipient extends Document {
     location: string;
     careNeeds: CareNeed[];
     medicalConditions: string[];
-    emergencyContactName?: string;
-    emergencyContactPhone?: string;
     specialRequirements?: string;
     avatar?: string;
     mobilityLevel?: string;
@@ -60,12 +58,6 @@ const CareRecipientSchema: Schema = new Schema(
         },
         medicalConditions: {
             type: [String],
-        },
-        emergencyContactName: {
-            type: String,
-        },
-        emergencyContactPhone: {
-            type: String,
         },
         specialRequirements: {
             type: String,

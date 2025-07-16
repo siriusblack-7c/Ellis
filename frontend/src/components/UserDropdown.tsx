@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { User, Settings, Heart, Calendar, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface UserDropdownProps {
   user: {
@@ -22,10 +23,10 @@ interface UserDropdownProps {
 
 export default function UserDropdown({ user }: UserDropdownProps) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    // Mock logout functionality
-    console.log("Logging out...");
+    logout(); // logout user
     navigate("/");
   };
 
@@ -38,7 +39,7 @@ export default function UserDropdown({ user }: UserDropdownProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={user.avatar} alt={user.name} />
+            {user.avatar && <AvatarImage src={`http://localhost:5001${user.avatar}`} alt={user.name} />}
             <AvatarFallback className="bg-primary text-primary-foreground">
               {getInitials(user.name)}
             </AvatarFallback>

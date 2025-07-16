@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -6,205 +6,133 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Phone, MapPin, Heart, Clock } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Plus, Edit, Trash2, Phone, MapPin, Heart } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useRecipients } from "@/hooks/useRecipients";
+import { CareRecipient } from "@/types/recipient";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
 
-interface CareRecipient {
-  id: string;
-  name: string;
-  age: number;
-  location: string;
-  care_needs: string[];
-  medical_conditions: string[];
-  emergency_contact_name: string;
-  emergency_contact_phone: string;
-  special_requirements?: string;
-  profile_image?: string;
-  mobility_level: string;
-  preferred_language: string;
-  created_at: string;
-}
-
-const mockCareRecipients: CareRecipient[] = [
-  {
-    id: "1",
-    name: "Eleanor Doe",
-    age: 82,
-    location: "New York, NY",
-    care_needs: ["Personal Care", "Medication Management", "Companionship"],
-    medical_conditions: ["Diabetes", "Mild Dementia"],
-    emergency_contact_name: "John Doe",
-    emergency_contact_phone: "+1234567890",
-    special_requirements: "Prefers female caregivers, needs help with evening medications",
-    profile_image: "/placeholder.svg",
-    mobility_level: "Limited - Wheelchair",
-    preferred_language: "English",
-    created_at: "2024-01-15"
-  },
-  {
-    id: "2",
-    name: "Robert Johnson",
-    age: 75,
-    location: "New York, NY",
-    care_needs: ["Meal Preparation", "Light Housekeeping", "Transportation"],
-    medical_conditions: ["Heart Condition", "Arthritis"],
-    emergency_contact_name: "Mary Johnson",
-    emergency_contact_phone: "+1234567891",
-    special_requirements: "Needs low-sodium diet, enjoys crossword puzzles",
-    profile_image: "/placeholder.svg",
-    mobility_level: "Good - Uses Walker",
-    preferred_language: "English",
-    created_at: "2024-02-20"
-  }
-];
-
-const careNeedsOptions = [
-  "Personal Care",
-  "Companionship", 
-  "Meal Preparation",
-  "Medication Management",
-  "Mobility Assistance",
-  "Dementia Care",
-  "Post-Surgery Care",
-  "Chronic Condition Care",
-  "Light Housekeeping",
-  "Transportation",
-  "Medical Appointments"
-];
+const initialFormData = {
+  name: "",
+  age: 0,
+  location: "",
+  careNeeds: [],
+  emergencyContactName: "",
+  emergencyContactPhone: "",
+  specialRequirements: "",
+  medicalConditions: [],
+  mobilityLevel: "",
+  preferredLanguage: "",
+  avatar: "",
+  avatarFile: null as File | null,
+};
 
 export default function CareRecipients() {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [recipients, setRecipients] = useState<CareRecipient[]>(mockCareRecipients);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedRecipient, setSelectedRecipient] = useState<CareRecipient | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    age: "",
-    location: "",
-    care_needs: [] as string[],
-    medical_conditions: "",
-    mobility_level: "",
-    emergency_contact_name: "",
-    emergency_contact_phone: "",
-    special_requirements: ""
-  });
+  const {
+    recipients,
+    loading,
+    fetchRecipients,
+    addRecipient,
+    updateRecipient,
+    removeRecipient,
+  } = useRecipients();
 
-  const handleDelete = (id: string) => {
-    setRecipients(recipients.filter(r => r.id !== id));
-    toast({
-      title: "Care recipient deleted",
-      description: "The care recipient has been successfully removed.",
-    });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
+  const [selectedRecipient, setSelectedRecipient] = useState<CareRecipient | null>(null);
+  const [formData, setFormData] = useState<any>(initialFormData);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchRecipients();
+  }, []);
+
+  const handleAddClick = () => {
+    setDialogMode("add");
+    setSelectedRecipient(null);
+    setFormData(initialFormData);
+    setAvatarPreview(null);
+    setIsDialogOpen(true);
   };
 
-  const handleEdit = (recipient: CareRecipient) => {
+  const handleEditClick = (recipient: CareRecipient) => {
+    setDialogMode("edit");
     setSelectedRecipient(recipient);
     setFormData({
       name: recipient.name,
-      age: recipient.age.toString(),
+      age: recipient.age,
       location: recipient.location,
-      care_needs: recipient.care_needs,
-      medical_conditions: recipient.medical_conditions.join(", "),
-      mobility_level: recipient.mobility_level,
-      emergency_contact_name: recipient.emergency_contact_name,
-      emergency_contact_phone: recipient.emergency_contact_phone,
-      special_requirements: recipient.special_requirements || ""
+      careNeeds: recipient.careNeeds,
+      specialRequirements: recipient.specialRequirements || "",
+      medicalConditions: recipient.medicalConditions || [],
+      mobilityLevel: recipient.mobilityLevel || "",
+      preferredLanguage: recipient.preferredLanguage || "",
+      avatar: recipient.avatar || "",
+      avatarFile: null,
     });
-    setIsEditDialogOpen(true);
+    setAvatarPreview(recipient.avatar ? `${import.meta.env.VITE_API_BASE_URL}/${recipient.avatar}` : null);
+    setIsDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    const dataToSave: any = {
+      name: formData.name,
+      age: formData.age,
+      location: formData.location,
+      careNeeds: formData.careNeeds,
+      emergencyContactName: formData.emergencyContactName,
+      emergencyContactPhone: formData.emergencyContactPhone,
+      specialRequirements: formData.specialRequirements,
+      medicalConditions: Array.isArray(formData.medicalConditions)
+        ? formData.medicalConditions
+        : formData.medicalConditions.split(',').map((s: string) => s.trim()).filter(Boolean),
+      mobilityLevel: formData.mobilityLevel,
+      preferredLanguage: formData.preferredLanguage,
+    };
+
+    if (formData.avatarFile) {
+      dataToSave.avatar = formData.avatarFile;
+    }
+
+    if (dialogMode === "add") {
+      await addRecipient(dataToSave);
+    } else if (selectedRecipient) {
+      await updateRecipient(selectedRecipient._id, dataToSave);
+    }
+    setIsDialogOpen(false);
+    setAvatarPreview(null);
+    fetchRecipients();
+  };
+
+  const handleDelete = async (id: string) => {
+    await removeRecipient(id);
+    fetchRecipients();
   };
 
   const handleBookCare = (recipient: CareRecipient) => {
     navigate("/book-care", { state: { selectedRecipient: recipient } });
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      age: "",
-      location: "",
-      care_needs: [],
-      medical_conditions: "",
-      mobility_level: "",
-      emergency_contact_name: "",
-      emergency_contact_phone: "",
-      special_requirements: ""
-    });
-  };
-
-  const handleSaveRecipient = () => {
-    if (!formData.name || !formData.age || !formData.location) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const newRecipient: CareRecipient = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: formData.name,
-      age: parseInt(formData.age),
-      location: formData.location,
-      care_needs: formData.care_needs,
-      medical_conditions: formData.medical_conditions.split(",").map(c => c.trim()).filter(Boolean),
-      emergency_contact_name: formData.emergency_contact_name,
-      emergency_contact_phone: formData.emergency_contact_phone,
-      special_requirements: formData.special_requirements,
-      profile_image: "/placeholder.svg",
-      mobility_level: formData.mobility_level,
-      preferred_language: "English",
-      created_at: new Date().toISOString().split('T')[0]
-    };
-
-    setRecipients([...recipients, newRecipient]);
-    setIsAddDialogOpen(false);
-    resetForm();
-    toast({
-      title: "Care recipient added",
-      description: "New care recipient has been successfully added.",
-    });
-  };
-
-  const handleUpdateRecipient = () => {
-    if (!selectedRecipient || !formData.name || !formData.age || !formData.location) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const updatedRecipient: CareRecipient = {
-      ...selectedRecipient,
-      name: formData.name,
-      age: parseInt(formData.age),
-      location: formData.location,
-      care_needs: formData.care_needs,
-      medical_conditions: formData.medical_conditions.split(",").map(c => c.trim()).filter(Boolean),
-      emergency_contact_name: formData.emergency_contact_name,
-      emergency_contact_phone: formData.emergency_contact_phone,
-      special_requirements: formData.special_requirements,
-      mobility_level: formData.mobility_level
-    };
-
-    setRecipients(recipients.map(r => r.id === selectedRecipient.id ? updatedRecipient : r));
-    setIsEditDialogOpen(false);
-    setSelectedRecipient(null);
-    resetForm();
-    toast({
-      title: "Care recipient updated",
-      description: "Care recipient information has been successfully updated.",
-    });
   };
 
   return (
@@ -219,321 +147,249 @@ export default function CareRecipients() {
                 Manage profiles for people receiving care
               </p>
             </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Care Recipient
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Add New Care Recipient</DialogTitle>
-                  <DialogDescription>
-                    Add details for someone who will receive care services
-                  </DialogDescription>
-                </DialogHeader>
-                <RecipientForm
-                  formData={formData}
-                  setFormData={setFormData}
-                  careNeedsOptions={careNeedsOptions}
-                />
-                
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => {
-                    setIsAddDialogOpen(false);
-                    resetForm();
-                  }}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSaveRecipient}>
-                    Add Recipient
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            {/* Edit Dialog */}
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Edit Care Recipient</DialogTitle>
-                  <DialogDescription>
-                    Update details for {selectedRecipient?.name}
-                  </DialogDescription>
-                </DialogHeader>
-                <RecipientForm
-                  formData={formData}
-                  setFormData={setFormData}
-                  careNeedsOptions={careNeedsOptions}
-                />
-                
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => {
-                    setIsEditDialogOpen(false);
-                    setSelectedRecipient(null);
-                    resetForm();
-                  }}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleUpdateRecipient}>
-                    Update Recipient
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={handleAddClick}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Care Recipient
+            </Button>
           </div>
 
-          {recipients.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Heart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No Care Recipients Yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Add your first care recipient to start booking care services
-                </p>
-                <Button onClick={() => setIsAddDialogOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Care Recipient
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-6">
-              {recipients.map((recipient) => (
-                <Card key={recipient.id} className="hover:shadow-lg transition-shadow">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i}>
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-4">
-                        <Avatar className="w-16 h-16">
-                          <AvatarImage src={recipient.profile_image} alt={recipient.name} />
-                          <AvatarFallback className="text-lg">
-                            {recipient.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <CardTitle className="text-xl">{recipient.name}</CardTitle>
-                          <CardDescription className="flex items-center space-x-4 mt-1">
-                            <span>Age {recipient.age}</span>
-                            <div className="flex items-center">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              {recipient.location}
-                            </div>
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(recipient)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleDelete(recipient.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                    <div className="flex items-center space-x-4">
+                      <Skeleton className="h-12 w-12 rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[150px]" />
+                        <Skeleton className="h-4 w-[100px]" />
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold mb-2">Care Needs</h4>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {recipient.care_needs.map((need) => (
-                            <Badge key={need} variant="secondary">
-                              {need}
-                            </Badge>
-                          ))}
-                        </div>
-
-                        <h4 className="font-semibold mb-2">Medical Conditions</h4>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {recipient.medical_conditions.map((condition) => (
-                            <Badge key={condition} variant="outline">
-                              {condition}
-                            </Badge>
-                          ))}
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Clock className="w-4 h-4 mr-2" />
-                            Mobility: {recipient.mobility_level}
-                          </div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <span className="w-4 h-4 mr-2 flex items-center justify-center text-xs">🗣️</span>
-                            Language: {recipient.preferred_language}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-semibold mb-2">Emergency Contact</h4>
-                        <div className="space-y-2 mb-4">
-                          <div className="flex items-center text-sm">
-                            <span className="font-medium">{recipient.emergency_contact_name}</span>
-                          </div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Phone className="w-4 h-4 mr-2" />
-                            {recipient.emergency_contact_phone}
-                          </div>
-                        </div>
-
-                        {recipient.special_requirements && (
-                          <>
-                            <h4 className="font-semibold mb-2">Special Requirements</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {recipient.special_requirements}
-                            </p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center mt-6 pt-4 border-t">
-                      <div className="text-sm text-muted-foreground">
-                        Added on {new Date(recipient.created_at).toLocaleDateString()}
-                      </div>
-                      <Button onClick={() => handleBookCare(recipient)}>
-                        Book Care for {recipient.name.split(' ')[0]}
-                      </Button>
-                    </div>
+                  <CardContent className="space-y-4">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-[200px]" />
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          ) : recipients.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {recipients.map((recipient) => (
+                <Card key={recipient._id} className="flex flex-col">
+                  <CardHeader>
+                    <div className="flex items-center space-x-4">
+                      <Avatar className="w-16 h-16 border-2 border-primary">
+                        {recipient.avatar && <AvatarImage src={`${import.meta.env.VITE_API_BASE_URL}/${recipient.avatar}`} alt={recipient.name} />}
+                        <AvatarFallback className="text-2xl bg-muted">
+                          {recipient.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="text-xl">{recipient.name}</CardTitle>
+                        <CardDescription>{recipient.age} years old</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-4">
+                    <div className="flex items-start space-x-2 text-muted-foreground">
+                      <MapPin className="w-5 h-5 mt-1" />
+                      <span>{recipient.location}</span>
+                    </div>
+                    <div className="flex items-start space-x-2 text-muted-foreground">
+                      <Heart className="w-5 h-5 mt-1" />
+                      <div>
+                        <p className="font-semibold text-foreground">Care Needs:</p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {recipient.careNeeds.map((need) => (
+                            <Badge key={need} variant="secondary" className="capitalize">
+                              {need.replace(/([A-Z])/g, ' $1').trim()}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <div className="p-6 pt-0 flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => handleBookCare(recipient)}
+                      className="flex-1"
+                    >
+                      Book Care
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditClick(recipient)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the care recipient's profile.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(recipient._id)}
+                            className="bg-destructive hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 border-2 border-dashed rounded-lg">
+              <h2 className="text-2xl font-semibold">No Care Recipients Found</h2>
+              <p className="text-muted-foreground mt-2">
+                Get started by adding a new care recipient.
+              </p>
+              <Button className="mt-6" onClick={handleAddClick}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Care Recipient
+              </Button>
             </div>
           )}
         </div>
       </main>
       <Footer />
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle>{dialogMode === 'add' ? 'Add Care Recipient' : 'Edit Care Recipient'}</DialogTitle>
+            <DialogDescription>
+              {dialogMode === 'add' ? "Fill in the details of the new care recipient." : "Update the details of the care recipient."}
+            </DialogDescription>
+          </DialogHeader>
+          <RecipientForm formData={formData} setFormData={setFormData} avatarPreview={avatarPreview} setAvatarPreview={setAvatarPreview} />
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave}>Save</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-// Reusable form component for add/edit
-function RecipientForm({ formData, setFormData, careNeedsOptions }: {
+const CARE_NEEDS = [
+  'personalCare', 'companionship', 'mealPreparation', 'medicationManagement', 'mobilityAssistance',
+  'dementiaCare', 'postSurgeryCare', 'chronicConditionCare', 'lightHousekeeping', 'transportation', 'medicalAppointments'
+];
+
+function RecipientForm({ formData, setFormData, avatarPreview, setAvatarPreview }: {
   formData: any;
   setFormData: (data: any) => void;
-  careNeedsOptions: string[];
+  avatarPreview: string | null;
+  setAvatarPreview: (preview: string | null) => void;
 }) {
   const toggleCareNeed = (need: string) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      care_needs: prev.care_needs.includes(need)
-        ? prev.care_needs.filter((n: string) => n !== need)
-        : [...prev.care_needs, need]
-    }));
+    const currentNeeds = formData.careNeeds || [];
+    const newNeeds = currentNeeds.includes(need)
+      ? currentNeeds.filter((n: string) => n !== need)
+      : [...currentNeeds, need];
+    setFormData({ ...formData, careNeeds: newNeeds });
+  };
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData({ ...formData, [id]: value });
+  };
+
+  const handleAgeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, age: parseInt(e.target.value, 10) || 0 });
+  };
+
+  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFormData({ ...formData, avatarFile: file });
+      setAvatarPreview(URL.createObjectURL(file));
+    }
   };
 
   return (
-    <div className="grid gap-6 py-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Full Name</Label>
-          <Input 
-            id="name" 
-            placeholder="Enter full name"
-            value={formData.name}
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-          />
-        </div>
-        <div>
-          <Label htmlFor="age">Age</Label>
-          <Input 
-            id="age" 
-            type="number" 
-            placeholder="Enter age"
-            value={formData.age}
-            onChange={(e) => setFormData({...formData, age: e.target.value})}
-          />
+    <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="avatar" className="text-right">Avatar</Label>
+        <div className="col-span-3 flex items-center gap-4">
+          <Avatar className="w-16 h-16">
+            {avatarPreview && <AvatarImage src={avatarPreview} />}
+            <AvatarFallback>{formData.name?.charAt(0) || '?'}</AvatarFallback>
+          </Avatar>
+          <Input id="avatar" type="file" className="col-span-2" onChange={handleAvatarChange} />
         </div>
       </div>
-      
-      <div>
-        <Label htmlFor="location">Location</Label>
-        <Input 
-          id="location" 
-          placeholder="City, State"
-          value={formData.location}
-          onChange={(e) => setFormData({...formData, location: e.target.value})}
-        />
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="name" className="text-right">Name</Label>
+        <Input id="name" value={formData.name} onChange={handleInputChange} className="col-span-3" />
       </div>
-
-      <div>
-        <Label>Care Needs</Label>
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          {careNeedsOptions.map((need) => (
-            <div key={need} className="flex items-center space-x-2">
-              <Checkbox 
-                id={need}
-                checked={formData.care_needs.includes(need)}
-                onCheckedChange={() => toggleCareNeed(need)}
-              />
-              <Label htmlFor={need} className="text-sm">{need}</Label>
-            </div>
-          ))}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="age" className="text-right">Age</Label>
+        <Input id="age" type="number" value={formData.age} onChange={handleAgeChange} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="location" className="text-right">Location</Label>
+        <Input id="location" value={formData.location} onChange={handleInputChange} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Care Needs</Label>
+        <div className="col-span-3">
+          <div className="grid grid-cols-2 gap-2">
+            {CARE_NEEDS.map(need => (
+              <div key={need} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`need-${need}`}
+                  checked={formData.careNeeds.includes(need)}
+                  onCheckedChange={() => toggleCareNeed(need)}
+                />
+                <label htmlFor={`need-${need}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize">
+                  {need.replace(/([A-Z])/g, ' $1').trim()}
+                </label>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-
-      <div>
-        <Label htmlFor="medical-conditions">Medical Conditions</Label>
-        <Textarea 
-          id="medical-conditions" 
-          placeholder="List any medical conditions..."
-          value={formData.medical_conditions}
-          onChange={(e) => setFormData({...formData, medical_conditions: e.target.value})}
-        />
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="medicalConditions" className="text-right">Medical Conditions</Label>
+        <Textarea id="medicalConditions" value={Array.isArray(formData.medicalConditions) ? formData.medicalConditions.join(', ') : formData.medicalConditions} onChange={handleInputChange} className="col-span-3" placeholder="Comma-separated conditions" />
       </div>
-
-      <div>
-        <Label htmlFor="mobility">Mobility Level</Label>
-        <Select 
-          value={formData.mobility_level}
-          onValueChange={(value) => setFormData({...formData, mobility_level: value})}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select mobility level" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Excellent - Fully Independent">Excellent - Fully Independent</SelectItem>
-            <SelectItem value="Good - Uses Walker/Cane">Good - Uses Walker/Cane</SelectItem>
-            <SelectItem value="Limited - Wheelchair">Limited - Wheelchair</SelectItem>
-            <SelectItem value="Bed-bound">Bed-bound</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="emergencyContactName" className="text-right">Emergency Contact</Label>
+        <Input id="emergencyContactName" value={formData.emergencyContactName} onChange={handleInputChange} className="col-span-3" placeholder="Name" />
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="emergency-name">Emergency Contact Name</Label>
-          <Input 
-            id="emergency-name" 
-            placeholder="Contact name"
-            value={formData.emergency_contact_name}
-            onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})}
-          />
-        </div>
-        <div>
-          <Label htmlFor="emergency-phone">Emergency Contact Phone</Label>
-          <Input 
-            id="emergency-phone" 
-            placeholder="Phone number"
-            value={formData.emergency_contact_phone}
-            onChange={(e) => setFormData({...formData, emergency_contact_phone: e.target.value})}
-          />
-        </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="emergencyContactPhone" className="text-right"></Label>
+        <Input id="emergencyContactPhone" value={formData.emergencyContactPhone} onChange={handleInputChange} className="col-span-3" placeholder="Phone" />
       </div>
-
-      <div>
-        <Label htmlFor="special-requirements">Special Requirements</Label>
-        <Textarea 
-          id="special-requirements" 
-          placeholder="Any special requirements or preferences..."
-          value={formData.special_requirements}
-          onChange={(e) => setFormData({...formData, special_requirements: e.target.value})}
-        />
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="mobilityLevel" className="text-right">Mobility Level</Label>
+        <Input id="mobilityLevel" value={formData.mobilityLevel} onChange={handleInputChange} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="preferredLanguage" className="text-right">Preferred Language</Label>
+        <Input id="preferredLanguage" value={formData.preferredLanguage} onChange={handleInputChange} className="col-span-3" />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="specialRequirements" className="text-right">Special Requirements</Label>
+        <Textarea id="specialRequirements" value={formData.specialRequirements} onChange={handleInputChange} className="col-span-3" />
       </div>
     </div>
   );

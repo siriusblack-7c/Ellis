@@ -8,11 +8,12 @@ import Logo from "./Logo";
 import UserDropdown from "./UserDropdown";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
+import authApi from "@/api/authApi";
 
 export default function Navbar() {
   const { t } = useLanguage();
-  const { isAuthenticated, user, loading } = useAuth();
+  const { isAuthenticated, user, loading, getProfile } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -36,6 +37,13 @@ export default function Navbar() {
     { name: "Admin Dashboard", path: "/admin" },
   ];
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      await getProfile();
+    };
+    fetchProfile();
+  }, []);
+  
   const handleScrollTo = (selector: string) => {
     const element = document.querySelector(selector);
     if (element) {
@@ -106,7 +114,7 @@ export default function Navbar() {
           {!loading && (
             <>
               {isAuthenticated && user ? (
-                <UserDropdown user={user} />
+                <UserDropdown user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, avatar: user.avatar }} />
               ) : (
                 <>
                   <Button asChild className="btn-primary">
@@ -182,7 +190,7 @@ export default function Navbar() {
               <>
                 {isAuthenticated && user ? (
                   <div className="mt-6">
-                    <UserDropdown user={user} />
+                    <UserDropdown user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, avatar: user.avatar }} />
                   </div>
                 ) : (
                   <>

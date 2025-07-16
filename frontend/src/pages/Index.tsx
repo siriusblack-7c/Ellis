@@ -8,13 +8,11 @@ import FaqSection from "@/components/home/FaqSection";
 import WelcomeSection from "@/components/home/WelcomeSection";
 import CommitmentSection from "@/components/home/CommitmentSection";
 import CtaSection from "@/components/home/CtaSection";
-import { useLanguage } from "@/contexts/LanguageContext";
 import WhyChooseUsSection from "@/components/home/WhyChooseUsSection";
 import HeroFeatures from "@/components/home/HeroFeatures";
 import ServicesSection from "@/components/home/ServicesSection";
 
 export default function Index() {
-  const { t } = useLanguage();
 
   useEffect(() => {
     // Scroll to top when component mounts

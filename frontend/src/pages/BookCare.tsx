@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, ChevronRight, ChevronLeft } from "lucide-react";
+import { useRecipients } from "@/hooks/useRecipients";
+import { CareRecipient } from "@/types/recipient";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const BOOKING_STEPS = [
   { id: 1, title: "Select Recipient", description: "Choose who needs care" },
@@ -18,15 +31,25 @@ const BOOKING_STEPS = [
 
 export default function BookCare() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
-  const [bookingData, setBookingData] = useState({
-    recipient: null,
+  const [bookingData, setBookingData] = useState<{
+    recipient: CareRecipient | null;
+    careNeeds: string[];
+    schedule: any;
+    caregiver: any;
+  }>({
+    recipient: location.state?.selectedRecipient || null,
     careNeeds: [],
     schedule: null,
     caregiver: null
   });
 
   const progress = (currentStep / BOOKING_STEPS.length) * 100;
+
+  const handleUpdateBookingData = (data: Partial<typeof bookingData>) => {
+    setBookingData((prev) => ({ ...prev, ...data }));
+  };
 
   const handleNext = () => {
     if (currentStep < BOOKING_STEPS.length) {
@@ -43,9 +66,9 @@ export default function BookCare() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <SelectRecipientStep onNext={handleNext} />;
+        return <SelectRecipientStep onNext={handleNext} onUpdateBookingData={handleUpdateBookingData} selectedRecipientId={bookingData.recipient?._id} />;
       case 2:
-        return <CareDetailsStep onNext={handleNext} onPrevious={handlePrevious} />;
+        return <CareDetailsStep onNext={handleNext} onPrevious={handlePrevious} onUpdateBookingData={handleUpdateBookingData} bookingData={bookingData} />;
       case 3:
         return <ScheduleStep onNext={handleNext} onPrevious={handlePrevious} />;
       case 4:
@@ -71,16 +94,14 @@ export default function BookCare() {
                 {BOOKING_STEPS.map((step) => (
                   <div
                     key={step.id}
-                    className={`text-center flex-1 ${
-                      currentStep >= step.id ? "text-primary" : "text-muted-foreground"
-                    }`}
+                    className={`text-center flex-1 ${currentStep >= step.id ? "text-primary" : "text-muted-foreground"
+                      }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center text-sm font-medium ${
-                        currentStep >= step.id
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}
+                      className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center text-sm font-medium ${currentStep >= step.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                        }`}
                     >
                       {step.id}
                     </div>
@@ -101,26 +122,83 @@ export default function BookCare() {
 }
 
 // Step 1: Select Recipient
-function SelectRecipientStep({ onNext }: { onNext: () => void }) {
+function SelectRecipientStep({ onNext, onUpdateBookingData, selectedRecipientId }: {
+  onNext: () => void;
+  onUpdateBookingData: (data: { recipient: CareRecipient | null }) => void;
+  selectedRecipientId?: string;
+}) {
   const navigate = useNavigate();
-  const [selectedRecipient, setSelectedRecipient] = useState<string | null>(null);
+  const { recipients, loading, error } = useRecipients();
 
-  const mockRecipients = [
-    {
-      id: "1",
-      name: "Eleanor Doe",
-      age: 82,
-      location: "New York, NY",
-      care_needs: ["Personal Care", "Medication Management"]
-    },
-    {
-      id: "2", 
-      name: "Robert Johnson",
-      age: 75,
-      location: "New York, NY",
-      care_needs: ["Meal Preparation", "Transportation"]
+  const handleSelectRecipient = (recipient: CareRecipient) => {
+    onUpdateBookingData({ recipient });
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="space-y-4">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="p-4 border rounded-lg flex items-center space-x-4">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-[200px]" />
+                <Skeleton className="h-4 w-[150px]" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
     }
-  ];
+
+    if (error) {
+      return <div className="text-center text-red-500">Error: {error}</div>;
+    }
+
+    if (recipients.length === 0) {
+      return (
+        <div className="text-center py-8 border-2 border-dashed rounded-lg">
+          <h3 className="text-lg font-semibold">No care recipients found.</h3>
+          <p className="text-muted-foreground text-sm mt-1">
+            You need to add a care recipient before you can book care.
+          </p>
+        </div>
+      );
+    }
+
+    return recipients.map((recipient) => (
+      <div
+        key={recipient._id}
+        className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedRecipientId === recipient._id
+          ? "border-primary bg-primary/5"
+          : "border-muted hover:border-muted-foreground"
+          }`}
+        onClick={() => handleSelectRecipient(recipient)}
+      >
+        <div className="flex items-start space-x-4">
+          <Avatar className="w-12 h-12 border">
+            {recipient.avatar && <AvatarImage src={`${import.meta.env.VITE_API_BASE_URL}/${recipient.avatar}`} alt={recipient.name} />}
+            <AvatarFallback>{recipient.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <h3 className="font-semibold">{recipient.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              Age {recipient.age} • {recipient.location}
+            </p>
+            {recipient.careNeeds && recipient.careNeeds.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {recipient.careNeeds.map((need) => (
+                  <Badge key={need} variant="secondary" className="text-xs capitalize">
+                    {need.replace(/([A-Z])/g, ' $1').trim()}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    ));
+  };
 
   return (
     <Card>
@@ -131,33 +209,7 @@ function SelectRecipientStep({ onNext }: { onNext: () => void }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {mockRecipients.map((recipient) => (
-          <div
-            key={recipient.id}
-            className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-              selectedRecipient === recipient.id
-                ? "border-primary bg-primary/5"
-                : "border-muted hover:border-muted-foreground"
-            }`}
-            onClick={() => setSelectedRecipient(recipient.id)}
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-semibold">{recipient.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  Age {recipient.age} • {recipient.location}
-                </p>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {recipient.care_needs.map((need) => (
-                    <Badge key={need} variant="secondary" className="text-xs">
-                      {need}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+        {renderContent()}
 
         <Button
           variant="outline"
@@ -168,7 +220,7 @@ function SelectRecipientStep({ onNext }: { onNext: () => void }) {
         </Button>
 
         <div className="flex justify-end pt-4">
-          <Button onClick={onNext} disabled={!selectedRecipient}>
+          <Button onClick={onNext} disabled={!selectedRecipientId}>
             Next
             <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
@@ -179,13 +231,13 @@ function SelectRecipientStep({ onNext }: { onNext: () => void }) {
 }
 
 // Step 2: Care Details
-function CareDetailsStep({ onNext, onPrevious }: { onNext: () => void; onPrevious: () => void }) {
-  const [selectedNeeds, setSelectedNeeds] = useState<string[]>([]);
+function CareDetailsStep({ onNext, onPrevious, onUpdateBookingData, bookingData }: { onNext: () => void; onPrevious: () => void; onUpdateBookingData: (data: any) => void; bookingData: any; }) {
+  const [selectedNeeds, setSelectedNeeds] = useState<string[]>(bookingData.careNeeds || bookingData.recipient?.careNeeds || []);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
 
   const careNeeds = [
     "Personal Care",
-    "Companionship", 
+    "Companionship",
     "Meal Preparation",
     "Medication Management",
     "Mobility Assistance",
@@ -203,11 +255,11 @@ function CareDetailsStep({ onNext, onPrevious }: { onNext: () => void; onPreviou
   ];
 
   const toggleNeed = (need: string) => {
-    setSelectedNeeds(prev =>
-      prev.includes(need)
-        ? prev.filter(n => n !== need)
-        : [...prev, need]
-    );
+    const newNeeds = selectedNeeds.includes(need)
+      ? selectedNeeds.filter(n => n !== need)
+      : [...selectedNeeds, need];
+    setSelectedNeeds(newNeeds);
+    onUpdateBookingData({ careNeeds: newNeeds });
   };
 
   const toggleAddOn = (addOn: string) => {
@@ -250,11 +302,10 @@ function CareDetailsStep({ onNext, onPrevious }: { onNext: () => void; onPreviou
             {premiumAddOns.map((addOn) => (
               <div
                 key={addOn.name}
-                className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                  selectedAddOns.includes(addOn.name)
-                    ? "border-primary bg-primary/5"
-                    : "border-muted hover:border-muted-foreground"
-                }`}
+                className={`p-3 border rounded-lg cursor-pointer transition-colors ${selectedAddOns.includes(addOn.name)
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-muted-foreground"
+                  }`}
                 onClick={() => toggleAddOn(addOn.name)}
               >
                 <div className="flex justify-between items-center">
@@ -327,7 +378,7 @@ function ScheduleStep({ onNext, onPrevious }: { onNext: () => void; onPrevious: 
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               min={minDateString}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800"
             />
             <p className="text-xs text-muted-foreground mt-1">
               Minimum 1 week advance notice required
@@ -340,7 +391,7 @@ function ScheduleStep({ onNext, onPrevious }: { onNext: () => void; onPrevious: 
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               min={startDate || minDateString}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800"
             />
           </div>
         </div>
@@ -351,11 +402,10 @@ function ScheduleStep({ onNext, onPrevious }: { onNext: () => void; onPrevious: 
             {shiftTypes.map((shift) => (
               <div
                 key={shift.name}
-                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                  shiftType === shift.name
-                    ? "border-primary bg-primary/5"
-                    : "border-muted hover:border-muted-foreground"
-                }`}
+                className={`p-4 border rounded-lg cursor-pointer transition-colors ${shiftType === shift.name
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-muted-foreground"
+                  }`}
                 onClick={() => setShiftType(shift.name)}
               >
                 <div className="flex justify-between items-start">
@@ -392,8 +442,8 @@ function ScheduleStep({ onNext, onPrevious }: { onNext: () => void; onPrevious: 
             <ChevronLeft className="w-4 h-4 mr-2" />
             Previous
           </Button>
-          <Button 
-            onClick={onNext} 
+          <Button
+            onClick={onNext}
             disabled={!startDate || !shiftType || selectedDays.length === 0}
           >
             Find Caregivers
@@ -425,7 +475,7 @@ function SelectCaregiverStep({ onNext, onPrevious }: { onNext: () => void; onPre
       bio: "Compassionate caregiver with extensive experience in elderly care and dementia support."
     },
     {
-      id: "2", 
+      id: "2",
       name: "Maria Garcia",
       rating: 4.8,
       reviews: 89,
@@ -452,11 +502,10 @@ function SelectCaregiverStep({ onNext, onPrevious }: { onNext: () => void; onPre
         {recommendedCaregivers.map((caregiver) => (
           <div
             key={caregiver.id}
-            className={`p-6 border rounded-lg cursor-pointer transition-colors ${
-              selectedCaregiver === caregiver.id
-                ? "border-primary bg-primary/5"
-                : "border-muted hover:border-muted-foreground"
-            }`}
+            className={`p-6 border rounded-lg cursor-pointer transition-colors ${selectedCaregiver === caregiver.id
+              ? "border-primary bg-primary/5"
+              : "border-muted hover:border-muted-foreground"
+              }`}
             onClick={() => setSelectedCaregiver(caregiver.id)}
           >
             <div className="flex items-start space-x-4">
@@ -482,9 +531,9 @@ function SelectCaregiverStep({ onNext, onPrevious }: { onNext: () => void; onPre
                     )}
                   </div>
                 </div>
-                
+
                 <p className="text-sm mb-3">{caregiver.bio}</p>
-                
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-medium mb-1">Languages</h4>
@@ -534,76 +583,98 @@ function SelectCaregiverStep({ onNext, onPrevious }: { onNext: () => void; onPre
 // Step 5: Confirmation
 function ConfirmationStep({ onPrevious }: { onPrevious: () => void }) {
   const navigate = useNavigate();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleConfirm = () => {
-    // Here you would submit the booking
-    navigate("/my-bookings");
+    // Here you would submit the booking, for now, we just open the dialog
+    setIsDialogOpen(true);
+  };
+
+  const handleGoToDashboard = () => {
+    navigate("/client-dashboard");
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Booking Confirmation</CardTitle>
-        <CardDescription>
-          Review your booking details before confirming
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="bg-muted p-6 rounded-lg">
-          <h3 className="font-semibold mb-4">Booking Summary</h3>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span>Care Recipient:</span>
-              <span className="font-medium">Eleanor Doe</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Caregiver:</span>
-              <span className="font-medium">Sarah Johnson</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Schedule:</span>
-              <span className="font-medium">Day Shift (Mon-Fri)</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Start Date:</span>
-              <span className="font-medium">July 20, 2024</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Hourly Rate:</span>
-              <span className="font-medium">$28/hour</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Weekly Hours:</span>
-              <span className="font-medium">50 hours</span>
-            </div>
-            <div className="border-t pt-3 flex justify-between text-lg font-bold">
-              <span>Weekly Total:</span>
-              <span>$1,400</span>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Booking Confirmation</CardTitle>
+          <CardDescription>
+            Review your booking details before confirming
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="bg-muted p-6 rounded-lg">
+            <h3 className="font-semibold mb-4">Booking Summary</h3>
+
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span>Care Recipient:</span>
+                <span className="font-medium">Eleanor Doe</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Caregiver:</span>
+                <span className="font-medium">Sarah Johnson</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Schedule:</span>
+                <span className="font-medium">Day Shift (Mon-Fri)</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Start Date:</span>
+                <span className="font-medium">July 20, 2024</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Hourly Rate:</span>
+                <span className="font-medium">$28/hour</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Weekly Hours:</span>
+                <span className="font-medium">50 hours</span>
+              </div>
+              <div className="border-t pt-3 flex justify-between text-lg font-bold">
+                <span>Weekly Total:</span>
+                <span>$1,400</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-          <h4 className="font-semibold mb-2">What happens next?</h4>
-          <ul className="text-sm space-y-1 text-muted-foreground">
-            <li>• Your booking will be confirmed within 24 hours</li>
-            <li>• The caregiver will contact you before the start date</li>
-            <li>• You can modify or cancel up to 48 hours before start date</li>
-            <li>• Payment will be processed after each week of service</li>
-          </ul>
-        </div>
+          <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+            <h4 className="font-semibold mb-2">What happens next?</h4>
+            <ul className="text-sm space-y-1 text-muted-foreground">
+              <li>• Your booking will be confirmed within 24 hours</li>
+              <li>• The caregiver will contact you before the start date</li>
+              <li>• You can modify or cancel up to 48 hours before start date</li>
+              <li>• Payment will be processed after each week of service</li>
+            </ul>
+          </div>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onPrevious}>
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Previous
-          </Button>
-          <Button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700">
-            Confirm Booking
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="flex justify-between pt-4">
+            <Button variant="outline" onClick={onPrevious}>
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Previous
+            </Button>
+            <Button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700">
+              Confirm Booking
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Booking Submitted</AlertDialogTitle>
+            <AlertDialogDescription>
+              Our caregivers are currently undergoing training in Canada. We will notify you as soon as they are ready to provide service. Thank you for your understanding.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleGoToDashboard}>
+              Go to Dashboard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

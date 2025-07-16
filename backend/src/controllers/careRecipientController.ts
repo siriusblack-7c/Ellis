@@ -6,7 +6,7 @@ export const createCareRecipient = async (req: IRequest, res: Response) => {
     try {
         const recipient = await careRecipientService.addRecipient(
             req.body,
-            req.user!._id
+            req.user!._id as any
         );
         res.status(201).json(recipient);
     } catch (error: any) {
@@ -17,7 +17,7 @@ export const createCareRecipient = async (req: IRequest, res: Response) => {
 export const getCareRecipients = async (req: IRequest, res: Response) => {
     try {
         const recipients = await careRecipientService.getRecipientsForClient(
-            req.user!._id
+            req.user!._id as any
         );
         res.status(200).json(recipients);
     } catch (error: any) {
@@ -29,7 +29,7 @@ export const getCareRecipientById = async (req: IRequest, res: Response) => {
     try {
         const recipient = await careRecipientService.getRecipientDetails(
             req.params.id,
-            req.user!._id
+            req.user!._id as any
         );
         res.status(200).json(recipient);
     } catch (error: any) {
@@ -42,7 +42,7 @@ export const updateCareRecipient = async (req: IRequest, res: Response) => {
         const recipient = await careRecipientService.updateRecipient(
             req.params.id,
             req.body,
-            req.user!._id
+            req.user!._id as any
         );
         res.status(200).json(recipient);
     } catch (error: any) {
@@ -52,7 +52,7 @@ export const updateCareRecipient = async (req: IRequest, res: Response) => {
 
 export const deleteCareRecipient = async (req: IRequest, res: Response) => {
     try {
-        await careRecipientService.removeRecipient(req.params.id, req.user!._id);
+        await careRecipientService.removeRecipient(req.params.id, req.user!._id as any);
         res.status(204).send();
     } catch (error: any) {
         res.status(400).json({ message: error.message });

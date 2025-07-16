@@ -1,21 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-interface User {
-    email: string;
-    user_type: 'client' | 'caregiver' | 'admin';
-    [key: string]: any;
-}
+import authApi from '../api/authApi'; // API -> Backend
+import { RegisterRequest, User } from '../types/user';
 
 interface AuthContextType {
     isAuthenticated: boolean;
     user: User | null;
     token: string | null;
-    login: (userData: User, token: string) => void;
+    login: (email: string, password: string) => Promise<void>;
+    register: (userData: RegisterRequest) => Promise<void>;
     logout: () => void;
     loading: boolean;
+    updateUser: (formData: FormData) => Promise<void>;
+    getProfile: () => Promise<User>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -38,11 +38,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }, []);
 
-    const login = (userData: User, userToken: string) => {
-        localStorage.setItem('user_auth', JSON.stringify(userData));
-        localStorage.setItem('token', userToken);
-        setUser(userData);
-        setToken(userToken);
+    const login = async (email: string, password: string) => {
+        const response = await authApi.login(email, password);
+        localStorage.setItem('user_auth', JSON.stringify(response));
+        localStorage.setItem('token', response.token);
+        setUser(response);
+        setToken(response.token);
+    };
+
+    const register = async (userData: RegisterRequest) => {
+        const response = await authApi.register(userData);
+        localStorage.setItem('user_auth', JSON.stringify(response));
+        localStorage.setItem('token', response.token);
+        setUser(response);
+        setToken(response.token);
     };
 
     const logout = () => {
@@ -52,17 +61,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setToken(null);
     };
 
+    const updateUser = async (formData: FormData) => {
+        const response = await authApi.updateProfile(formData);
+        localStorage.setItem('user_auth', JSON.stringify(response));
+        setUser(response);
+    };
+
+    const getProfile = async () => {
+        const response = await authApi.getProfile();
+        setUser(response);
+        return response;
+    };
+
     return (
-        <AuthContext.Provider value={{ isAuthenticated: !!token, user, token, login, logout, loading }}>
+        <AuthContext.Provider value={{ isAuthenticated: !!token, user, token, login, register, logout, loading, updateUser, getProfile }}>
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
 }; 
