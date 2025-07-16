@@ -11,7 +11,7 @@ export const create = async (
 export const findByUserId = async (
     userId: string | mongoose.Types.ObjectId
 ): Promise<ICaregiverApplication | null> => {
-    return CaregiverApplication.findOne({ user_id: userId });
+    return CaregiverApplication.findOne({ userId: userId });
 };
 
 export const findById = async (

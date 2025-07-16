@@ -15,4 +15,16 @@ export const createUser = async (userData: Partial<IUser>): Promise<IUser> => {
 
 export const updateUser = async (id: string, userData: Partial<IUser>): Promise<IUser | null> => {
     return User.findByIdAndUpdate(id, userData, { new: true });
-} 
+};
+
+export const findAll = async (): Promise<IUser[]> => {
+    return User.find();
+};
+
+export const updateById = async (id: string, userData: Partial<IUser>): Promise<IUser | null> => {
+    return User.findByIdAndUpdate(id, userData, { new: true });
+}; 
+
+export const findUserByGoogleId = async (googleId: string): Promise<IUser | null> => {
+    return User.findOne({ googleId });
+};

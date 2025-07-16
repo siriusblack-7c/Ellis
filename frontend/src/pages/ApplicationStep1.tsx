@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { createCaregiverApplication } from "@/api/caregiverApplicationApi";
 
 const countries = [
   "Argentina", "Bangladesh", "Brazil", "Colombia", "Dominican Republic",
@@ -20,6 +23,7 @@ const countries = [
 export default function ApplicationStep1() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     country: "",
     firstName: "",
@@ -33,46 +37,72 @@ export default function ApplicationStep1() {
     weekends: "",
     nights: "",
     coverLetter: "",
+    cv: null as File | null,
   });
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        phone: user.phoneNumber || "",
+      }));
+    }
+  }, [user]);
+
+  const mutation = useMutation({
+    mutationFn: createCaregiverApplication,
+    onSuccess: () => {
+      toast({
+        title: "Application Submitted!",
+        description: "Your application has been received. We'll review it and contact you soon.",
+      });
+      navigate('/application/step-2');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "An error occurred.",
+        variant: "destructive",
+      });
+    }
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const requiredFields = [
+    const requiredFields: (keyof typeof formData)[] = [
       "country", "firstName", "lastName", "address1", "city", "state",
       "email", "preferredLocation", "weekends", "nights", "coverLetter"
     ];
 
     for (const field of requiredFields) {
-      if (!formData[field as keyof typeof formData]) {
+      if (!formData[field]) {
         toast({
           title: "Missing Information",
-          description: "Please fill in all required fields.",
+          description: `Please fill in the ${field} field.`,
           variant: "destructive",
         });
         return;
       }
     }
 
-    // Store form data in localStorage for demo purposes
-    localStorage.setItem('application', JSON.stringify(formData));
+    const applicationData = {
+      preferredWorkLocation: formData.preferredLocation,
+      coverLetter: formData.coverLetter,
+      availability: {
+        weekends: formData.weekends === 'yes',
+        nights: formData.nights === 'yes',
+      }
+    };
 
-    toast({
-      title: "Application Submitted!",
-      description: "Your application has been received. We'll review it and contact you soon.",
-    });
-
-    // Optional: redirect to a thank you page or home page
-    setTimeout(() => {
-      navigate('/');
-    }, 2000);
+    mutation.mutate(applicationData);
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | File) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -182,12 +212,19 @@ export default function ApplicationStep1() {
                     <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-sm text-muted-foreground mb-2">Click to upload or drag and drop</p>
                     <p className="text-xs text-muted-foreground">PDF, DOC, DOCX (max 5MB)</p>
-                    <Input type="file" className="hidden" id="resume" accept=".pdf,.doc,.docx" />
+                    <Input
+                      type="file"
+                      className="hidden"
+                      id="resume"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => handleInputChange('cv', e.target.files ? e.target.files[0] : "")}
+                    />
                   </div>
+                  {formData.cv && <p className="text-sm text-muted-foreground">Selected file: {formData.cv.name}</p>}
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Submit Application
+                <Button type="submit" className="w-full" disabled={mutation.isPending}>
+                  {mutation.isPending ? 'Submitting...' : 'Submit Application'}
                 </Button>
               </form>
             </CardContent>

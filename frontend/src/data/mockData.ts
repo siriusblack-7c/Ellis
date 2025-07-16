@@ -3,13 +3,13 @@ export type UserStatus = 'active' | 'pending' | 'blocked';
 export type UserType = 'client' | 'caregiver';
 
 export interface MockUser {
-  id: string;
-  first_name: string;
-  last_name: string;
+  _id: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  user_type: UserType;
+  role: UserType;
   status: UserStatus;
-  created_at: string;
+  createdAt: string;
   phone: string;
   city: string;
   country: string;
@@ -18,9 +18,9 @@ export interface MockUser {
 
 export const mockUsers: MockUser[] = [
   {
-    id: '1',
-    first_name: 'John',
-    last_name: 'Doe',
+    _id: '1',
+    firstName: 'John',
+    lastName: 'Doe',
     email: 'john@example.com',
     user_type: 'client',
     status: 'active',
@@ -31,8 +31,8 @@ export const mockUsers: MockUser[] = [
   },
   {
     id: '2',
-    first_name: 'Jane',
-    last_name: 'Smith',
+    firstName: 'Jane',
+    lastName: 'Smith',
     email: 'jane@example.com',
     user_type: 'caregiver',
     status: 'active',
@@ -43,8 +43,8 @@ export const mockUsers: MockUser[] = [
   },
   {
     id: '3',
-    first_name: 'Mike',
-    last_name: 'Johnson',
+    firstName: 'Mike',
+    lastName: 'Johnson',
     email: 'mike@example.com',
     user_type: 'client',
     status: 'blocked',

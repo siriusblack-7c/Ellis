@@ -27,14 +27,14 @@ export function ActivityTab({ users }: ActivityTabProps) {
                                     <Avatar>
                                         <AvatarImage src={`https://i.pravatar.cc/150?u=${user?.email}`} />
                                         <AvatarFallback>
-                                            {user?.first_name.charAt(0)}
-                                            {user?.last_name.charAt(0)}
+                                            {user?.firstName.charAt(0)}
+                                            {user?.lastName.charAt(0)}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
                                         <p className="text-sm">
                                             <span className="font-semibold">
-                                                {user?.first_name} {user?.last_name}
+                                                {user?.firstName} {user?.lastName}
                                             </span>{" "}
                                             {activity.action}
                                         </p>

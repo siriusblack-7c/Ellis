@@ -18,7 +18,7 @@ export const applyToBeCaregiver = async (
         throw new Error('You have already submitted an application.');
     }
 
-    data.user_id = user._id;
+    data.userId = user._id;
     return applicationDataAccess.create(data);
 };
 
@@ -44,11 +44,28 @@ export const getApplicationDetails = async (
     }
 
     // Admins can see any application. Users can only see their own.
-    if (user.role !== 'admin' && !application.user_id.equals(user._id)) {
+    if (user.role !== 'admin' && !application.userId.equals(user._id)) {
         throw new Error('Not authorized to view this application.');
     }
 
     return application;
+};
+
+export const updateApplication = async (
+    applicationId: string,
+    data: Partial<ICaregiverApplication>,
+    user: IUser
+) => {
+    const application = await applicationDataAccess.findById(applicationId);
+    if (!application) {
+        throw new Error('Application not found.');
+    }
+
+    if (user.role !== 'admin' && !application.userId.equals(user._id)) {
+        throw new Error('Not authorized to update this application.');
+    }
+
+    return applicationDataAccess.updateById(applicationId, data);
 };
 
 export const updateApplicationStatus = async (

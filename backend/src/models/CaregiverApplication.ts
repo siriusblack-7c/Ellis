@@ -10,24 +10,29 @@ export type ApplicationStatus =
     | 'rejected';
 
 export interface ICaregiverApplication extends Document {
-    user_id: mongoose.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;
     status: ApplicationStatus;
-    years_experience: number;
-    preferred_work_location: string;
+    applicationStep: number;
+    yearsExperience: number;
+    preferredWorkLocation: string;
+    availability: {
+        weekends: boolean;
+        nights: boolean;
+    };
     specialties?: string[];
     certifications?: string[];
-    cv_url?: string;
-    cover_letter_url?: string;
-    certification_files_urls?: string[];
-    video_interview_url?: string;
-    admin_notes?: string;
+    cvUrl?: string;
+    coverLetter?: string;
+    certificationFilesUrls?: string[];
+    videoInterviewUrl?: string;
+    adminNotes?: string;
 }
 
 const CaregiverApplicationSchema: Schema = new Schema(
     {
-        user_id: {
+        userId: {
             type: Schema.Types.ObjectId,
-            ref: 'Profile',
+            ref: 'User',
             required: true,
         },
         status: {
@@ -39,11 +44,19 @@ const CaregiverApplicationSchema: Schema = new Schema(
             required: true,
             default: 'pending',
         },
-        years_experience: {
+        applicationStep: {
             type: Number,
-            required: true,
+            default: 1,
         },
-        preferred_work_location: {
+        availability: {
+            weekends: { type: Boolean, default: false },
+            nights: { type: Boolean, default: false },
+        },
+        yearsExperience: {
+            type: Number,
+            required: false, // Changed to false, as it's not in step 1
+        },
+        preferredWorkLocation: {
             type: String,
             required: true,
         },
@@ -53,19 +66,19 @@ const CaregiverApplicationSchema: Schema = new Schema(
         certifications: {
             type: [String],
         },
-        cv_url: {
+        cvUrl: {
             type: String,
         },
-        cover_letter_url: {
+        coverLetter: {
             type: String,
         },
-        certification_files_urls: {
+        certificationFilesUrls: {
             type: [String],
         },
-        video_interview_url: {
+        videoInterviewUrl: {
             type: String,
         },
-        admin_notes: {
+        adminNotes: {
             type: String,
         },
     },

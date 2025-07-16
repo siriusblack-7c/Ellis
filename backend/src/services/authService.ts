@@ -1,7 +1,10 @@
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import * as userDataAccess from '../data-access/user';
 import { IUser } from '../models/User';
 import config from '../config';
+
+const client = new OAuth2Client(config.googleClientId);
 
 const generateToken = (id: string) => {
     return jwt.sign({ id }, config.jwtSecret, {
@@ -63,6 +66,53 @@ export const login = async (userData: Partial<IUser>) => {
     }
 };
 
+export const googleLogin = async (token: string) => {
+
+    const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: config.googleClientId,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+        throw new Error('Invalid Google token');
+    }
+
+    const { sub: googleId, email, given_name: firstName, family_name: lastName } = payload;
+
+    let user = await userDataAccess.findUserByGoogleId(googleId);
+
+    if (!user) {
+        user = await userDataAccess.findUserByEmail(email!);
+        if (user) {
+            user.googleId = googleId;
+            await user.save();
+        } else {
+            user = await userDataAccess.createUser({
+                googleId,
+                email: email!,
+                firstName: firstName!,
+                lastName: lastName!,
+                password: `google-${googleId}` // Dummy password for Google users
+            });
+        }
+    }
+
+    if (user) {
+        return {
+            _id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+            phoneNumber: user.phoneNumber,
+            token: generateToken(user._id as string),
+        };
+    } else {
+        throw new Error('Could not login with Google');
+    }
+};
+
 export const updateUserProfile = async (userId: string, userData: Partial<IUser>) => {
     const updatedUser = await userDataAccess.updateUser(userId, userData);
     if (!updatedUser) {
@@ -84,7 +134,7 @@ export const changePassword = async (userId: string, oldPassword?: string, newPa
 
     user.password = newPassword;
     await user.save();
-};  
+};
 
 export const getProfile = async (userId: string) => {
     const user = await userDataAccess.findUserById(userId);

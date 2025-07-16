@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 export type UserRole = 'client' | 'caregiver' | 'admin';
 
 export interface IUser extends Document {
+    googleId?: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -11,17 +12,18 @@ export interface IUser extends Document {
     phoneNumber?: string;
     role: UserRole;
     createdAt: Date;
-    updatedAt: Date;
+    updatedAt: Date;    
 }
 
 const UserSchema: Schema = new Schema(
     {
+        googleId: { type: String, unique: true, sparse: true },
         avatar: { type: String },
-        addressStreet: { type: String },
-        addressCity: { type: String },
-        addressState: { type: String },
-        addressZip: { type: String },
-        addressCountry: { type: String },
+        country: { type: String },
+        address1: { type: String },
+        city: { type: String },
+        state: { type: String },
+        zip: { type: String },
         firstName: { type: String, required: true },
         lastName: { type: String, required: true },
         birthDate: { type: Date },
@@ -31,6 +33,10 @@ const UserSchema: Schema = new Schema(
         password: { type: String, required: true, select: false },
         phoneNumber: { type: String },
         role: { type: String, enum: ['client', 'caregiver', 'admin'], default: 'client' },
+        status: { type: String, enum: ['active', 'pending', 'blocked'], default: 'pending' },
+        tags: { type: [String] },
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now },
     },
     { timestamps: true }
 );

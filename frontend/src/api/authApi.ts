@@ -11,6 +11,10 @@ const authApi = {
         console.log(response.data, 'User registered successfully');
         return response.data;
     },
+    googleLogin: async (token: string) => {
+        const response = await axios.post(`/auth/google-login`, { token });
+        return response.data;
+    },
     checkAuth: async () => {
         const response = await axios.get(`/auth/me`);
         return response.data;
@@ -25,7 +29,7 @@ const authApi = {
     },
     getProfile: async () => {
         const response = await axios.get(`/auth/profile`);
-        return response.data;   
+        return response.data;
     },
 
     changePassword: async (data: any) => {

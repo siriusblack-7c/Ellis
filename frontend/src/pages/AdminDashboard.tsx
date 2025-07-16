@@ -10,13 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  mockUsers,
-  mockApplications,
-  mockStats,
-  MockUser,
-  MockApplication,
-} from "@/data/mockData";
+import { useAdmin } from "@/hooks/useAdmin";
 import { useGallery } from "@/contexts/GalleryContext";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -25,15 +19,21 @@ import { OverviewTab } from "@/components/admin/OverviewTab";
 import { UserManagementTab } from "@/components/admin/UserManagementTab";
 import { ApplicationsTab } from "@/components/admin/ApplicationsTab";
 import { ActivityTab } from "@/components/admin/ActivityTab";
-import { GalleryTab, GalleryImage } from "@/components/admin/GalleryTab";
+import { GalleryTab } from "@/components/admin/GalleryTab";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const {
+    users,
+    isLoadingUsers,
+    applications,
+    isLoadingApplications,
+    updateApplicationStatus,
+    updateUserStatus,
+  } = useAdmin();
+
   const { images: galleryImages, addImage, editImage, deleteImage, toggleImageActive } = useGallery();
-  const [users, setUsers] = useState<MockUser[]>(mockUsers);
-  const [applications, setApplications] =
-    useState<MockApplication[]>(mockApplications);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [selectedApplications, setSelectedApplications] = useState<string[]>([]);
   const [userSortBy, setUserSortBy] = useState<string>("name");
@@ -51,60 +51,26 @@ export default function AdminDashboard() {
   };
 
   const handleUserAction = (userId: string, action: string) => {
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === userId
-          ? { ...user, status: action === "block" ? "blocked" : "active" }
-          : user
-      )
-    );
-
-    toast({
-      title: `User ${action}ed`,
-      description: `User has been ${action}ed successfully.`,
-    });
+    updateUserStatus({ id: userId, status: action });
   };
 
   const handleVerifyDocuments = (applicationId: string) => {
-    setApplications((prev) =>
-      prev.map((app) =>
-        app.id === applicationId
-          ? { ...app, documents_verified: true, status: "under_review" }
-          : app
-      )
-    );
-
-    toast({
-      title: "Documents verified",
-      description: "Application documents have been verified.",
-    });
+    updateApplicationStatus({ id: applicationId, status: "under_review" });
   };
 
   const handleFlagApplication = (applicationId: string) => {
-    setApplications((prev) =>
-      prev.map((app) =>
-        app.id === applicationId ? { ...app, status: "rejected" } : app
-      )
-    );
+    updateApplicationStatus({ id: applicationId, status: "rejected" });
+  };
 
-    toast({
-      title: "Application flagged",
-      description: "Application has been flagged for review.",
-    });
+  const handleApproveApplication = (applicationId: string) => {
+    updateApplicationStatus({ id: applicationId, status: "hired" });
   };
 
   const handleTagUser = (userId: string, tag: string) => {
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === userId
-          ? { ...user, tags: [...(user.tags || []), tag] }
-          : user
-      )
-    );
-
+    // This function will need to be updated to use a mutation for tags
     toast({
       title: "Tag added",
-      description: `Tag "${tag}" has been added to user.`,
+      description: `Tag "${tag}" has been added to user (placeholder).`,
     });
   };
 
@@ -173,27 +139,26 @@ export default function AdminDashboard() {
     );
   };
 
-
   const filteredUsers = users
     .filter(
       (user) => userFilterStatus === "all" || user.status === userFilterStatus
     )
     .filter(
       (user) =>
-        user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
       if (userSortBy === "name")
-        return `${a.first_name} ${a.last_name}`.localeCompare(
-          `${b.first_name} ${b.last_name}`
+        return `${a.firstName} ${a.lastName}`.localeCompare(
+          `${b.firstName} ${b.lastName}`
         );
       if (userSortBy === "date")
         return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
-      if (userSortBy === "type") return a.user_type.localeCompare(b.user_type);
+      if (userSortBy === "type") return a.role.localeCompare(b.role);
       return 0;
     });
 
@@ -203,166 +168,110 @@ export default function AdminDashboard() {
         applicationFilterStatus === "all" ||
         app.status === applicationFilterStatus
     )
-    .sort((a, b) => {
-      if (userSortBy === "name") {
-        const userA = users.find((u) => u.id === a.user_id);
-        const userB = users.find((u) => u.id === b.user_id);
-        return `${userA?.first_name} ${userA?.last_name}`.localeCompare(
-          `${userB?.first_name} ${userB?.last_name}`
-        );
-      }
-      if (userSortBy === "experience")
-        return b.years_experience - a.years_experience;
-      return 0;
-    });
-
-  const userTypeData = [
-    {
-      name: "Clients",
-      value: users.filter((u) => u.user_type === "client").length,
-      color: "#0EA5E9",
-    },
-    {
-      name: "Caregivers",
-      value: users.filter((u) => u.user_type === "caregiver").length,
-      color: "#10B981",
-    },
-  ];
-
-  const statusData = [
-    {
-      name: "Active",
-      value: users.filter((u) => u.status === "active").length,
-      color: "#10B981",
-    },
-    {
-      name: "Pending",
-      value: users.filter((u) => u.status === "pending").length,
-      color: "#F59E0B",
-    },
-    {
-      name: "Blocked",
-      value: users.filter((u) => u.status === "blocked").length,
-      color: "#EF4444",
-    },
-  ];
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <Button onClick={handleLogout} variant="outline">
-            Logout
-          </Button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow-sm">
+        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+          <Button onClick={handleLogout} variant="destructive">Logout</Button>
         </div>
       </header>
+      <main className="py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <DashboardStats applications={applications} users={users} />
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="applications">Applications</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="gallery">Gallery</TabsTrigger>
+            </TabsList>
 
-      <main className="container mx-auto px-4 py-8">
-        <DashboardStats
-          totalUsers={mockStats.totalUsers}
-          activeUsers={mockStats.activeUsers}
-          pendingApplications={mockStats.pendingApplications}
-          verifiedCaregivers={mockStats.verifiedCaregivers}
-        />
+            <TabsContent value="users">
+              <UserManagementTab
+                users={filteredUsers}
+                selectedUsers={selectedUsers}
+                onSelectUser={handleSelectUser}
+                onSelectAllUsers={handleSelectAllUsers}
+                onUserAction={handleUserAction}
+                onTagUser={handleTagUser}
+                searchTerm={searchTerm}
+                onSearchTermChange={setSearchTerm}
+                filterStatus={userFilterStatus}
+                onFilterStatusChange={setUserFilterStatus}
+                sortBy={userSortBy}
+                onSortByChange={setUserSortBy}
+                onExport={() => exportToCSV(filteredUsers, "users")}
+                onContact={() => setCommunicationDialog(true)}
+                isLoading={isLoadingUsers}
+              />
+            </TabsContent>
 
-        <Tabs
-          defaultValue="overview"
-          className="space-y-4"
-          value={activeTab}
-          onValueChange={setActiveTab}
-        >
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="applications">Applications</TabsTrigger>
-            <TabsTrigger value="gallery">Gallery</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-          </TabsList>
+            <TabsContent value="applications">
+              <ApplicationsTab
+                applications={filteredApplications}
+                users={users}
+                selectedApplications={selectedApplications}
+                onSelectApplication={handleSelectApplication}
+                onSelectAllApplications={handleSelectAllApplications}
+                onVerifyDocuments={handleVerifyDocuments}
+                onFlagApplication={handleFlagApplication}
+                onApproveApplication={handleApproveApplication}
+                filterStatus={applicationFilterStatus}
+                onFilterStatusChange={setApplicationFilterStatus}
+                onExport={() => exportToCSV(filteredApplications, "applications")}
+                onContact={() => setCommunicationDialog(true)}
+                isLoading={isLoadingApplications}
+              />
+            </TabsContent>
 
-          <TabsContent value="overview">
-            <OverviewTab
-              monthlyGrowth={mockStats.monthlyGrowth}
-              userTypeData={userTypeData}
-              statusData={statusData}
-            />
-          </TabsContent>
+            <TabsContent value="gallery">
+              <GalleryTab
+                images={galleryImages}
+                onAddImage={addImage}
+                onEditImage={editImage}
+                onDeleteImage={deleteImage}
+                onToggleActive={toggleImageActive}
+              />
+            </TabsContent>
 
-          <TabsContent value="users">
-            <UserManagementTab
-              users={filteredUsers}
-              selectedUsers={selectedUsers}
-              onSelectUser={handleSelectUser}
-              onSelectAllUsers={handleSelectAllUsers}
-              onUserAction={handleUserAction}
-              onTagUser={handleTagUser}
-              searchTerm={searchTerm}
-              onSearchTermChange={setSearchTerm}
-              filterStatus={userFilterStatus}
-              onFilterStatusChange={setUserFilterStatus}
-              sortBy={userSortBy}
-              onSortByChange={setUserSortBy}
-              onExport={() => exportToCSV(filteredUsers, "users")}
-              onContact={() => setCommunicationDialog(true)}
-            />
-          </TabsContent>
+            <TabsContent value="activity">
+              <ActivityTab users={users} />
+            </TabsContent>
+          </Tabs>
 
-          <TabsContent value="applications">
-            <ApplicationsTab
-              applications={filteredApplications}
-              users={users}
-              selectedApplications={selectedApplications}
-              onSelectApplication={handleSelectApplication}
-              onSelectAllApplications={handleSelectAllApplications}
-              onVerifyDocuments={handleVerifyDocuments}
-              onFlagApplication={handleFlagApplication}
-              filterStatus={applicationFilterStatus}
-              onFilterStatusChange={setApplicationFilterStatus}
-              onExport={() => exportToCSV(filteredApplications, "applications")}
-              onContact={() => setCommunicationDialog(true)}
-            />
-          </TabsContent>
-
-          <TabsContent value="gallery">
-            <GalleryTab
-              images={galleryImages}
-              onAddImage={addImage}
-              onEditImage={editImage}
-              onDeleteImage={deleteImage}
-              onToggleActive={toggleImageActive}
-            />
-          </TabsContent>
-
-          <TabsContent value="activity">
-            <ActivityTab users={users} />
-          </TabsContent>
-        </Tabs>
-
-        <Dialog
-          open={communicationDialog}
-          onOpenChange={setCommunicationDialog}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Send Communication</DialogTitle>
-            </DialogHeader>
-            <Textarea
-              placeholder="Type your message here..."
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              rows={6}
-            />
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setCommunicationDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSendCommunication}>Send</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          <Dialog
+            open={communicationDialog}
+            onOpenChange={setCommunicationDialog}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Send Communication</DialogTitle>
+              </DialogHeader>
+              <Textarea
+                placeholder="Type your message here..."
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                rows={6}
+              />
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setCommunicationDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSendCommunication}>Send</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </main>
     </div>
   );

@@ -1,3 +1,5 @@
+export type UserRole = 'client' | 'caregiver' | 'admin';
+
 export interface User {
     id: string;
     email: string;
@@ -6,15 +8,20 @@ export interface User {
     phoneNumber: string;
     role: string;
     avatar: string; 
-    addressStreet: string;
-    addressCity: string;
-    addressState: string;
-    addressZip: string;
-    addressCountry: string;
+    address1: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
     bio: string;
     birthDate: string;
     gender: string;
+    status: string;
+    tags: string[];
+    createdAt: Date;
+    updatedAt: Date;
 }
+
 
 export interface RegisterRequest {
     firstName: string;

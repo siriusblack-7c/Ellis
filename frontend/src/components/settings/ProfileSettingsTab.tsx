@@ -70,11 +70,11 @@ export const ProfileSettingsTab = () => {
                 phoneNumber: user.phoneNumber,
                 birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
                 gender: user.gender,
-                addressStreet: user.addressStreet,
-                addressCity: user.addressCity,
-                addressState: user.addressState,
-                addressZip: user.addressZip,
-                addressCountry: user.addressCountry,
+                addressStreet: user.address1,
+                addressCity: user.city,
+                addressState: user.state,
+                addressZip: user.zip,
+                addressCountry: user.country,
                 bio: user.bio,
             });
         }

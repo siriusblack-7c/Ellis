@@ -65,3 +65,12 @@ export const getProfile = async (req: IRequest, res: Response) => {
         res.status(400).json({ message: error.message });
     }
 }
+
+export const googleLogin = async (req: IRequest, res: Response) => {
+    try {
+        const user = await authService.googleLogin(req.body.token);
+        res.status(200).json(user);
+    } catch (error: any) {
+        res.status(400).json({ message: error.message });
+    }
+}

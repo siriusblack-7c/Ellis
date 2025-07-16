@@ -102,7 +102,7 @@ export default function Profile() {
     )
   }
 
-  const fullAddress = [user.addressStreet, user.addressCity, user.addressState, user.addressZip, user.addressCountry].filter(Boolean).join(', ');
+  const fullAddress = [user.address1, user.city, user.state, user.zip, user.country].filter(Boolean).join(', ');
 
 
   return (
@@ -191,9 +191,9 @@ export default function Profile() {
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground mt-1" />
                     <div>
-                      <div>{user.addressStreet}</div>
-                      <div>{user.addressCity}, {user.addressState} {user.addressZip}</div>
-                      <div>{user.addressCountry}</div>
+                      <div>{user.address1}</div>
+                      <div>{user.city}, {user.state} {user.zip}</div>
+                      <div>{user.country}</div>
                     </div>
                   </div>
                 </div>

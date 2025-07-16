@@ -15,9 +15,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MockUser } from "@/data/mockData";
+import { User } from "@/types/user";
 import { MoreHorizontal, Download, Mail } from "lucide-react";
-import { TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -28,7 +27,7 @@ import {
 } from "@/components/ui/select";
 
 type UserManagementTabProps = {
-  users: MockUser[];
+  users: User[];
   selectedUsers: string[];
   onSelectUser: (userId: string, isSelected: boolean) => void;
   onSelectAllUsers: (isSelected: boolean) => void;
@@ -42,6 +41,7 @@ type UserManagementTabProps = {
   onSortByChange: (sortBy: string) => void;
   onExport: () => void;
   onContact: () => void;
+  isLoading: boolean;
 };
 
 export function UserManagementTab({
@@ -59,11 +59,17 @@ export function UserManagementTab({
   onSortByChange,
   onExport,
   onContact,
+  isLoading,
 }: UserManagementTabProps) {
   const isAllSelected =
     users.length > 0 && selectedUsers.length === users.length;
+
+  if (isLoading) {
+    return <div>Loading users...</div>;
+  }
+
   return (
-    <TabsContent value="users" className="space-y-4">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Input
@@ -79,7 +85,6 @@ export function UserManagementTab({
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="blocked">Blocked</SelectItem>
             </SelectContent>
           </Select>
@@ -124,18 +129,18 @@ export function UserManagementTab({
         </TableHeader>
         <TableBody>
           {users.map((user) => (
-            <TableRow key={user.id}>
+            <TableRow key={user._id}>
               <TableCell>
                 <Checkbox
-                  checked={selectedUsers.includes(user.id)}
+                  checked={selectedUsers.includes(user._id)}
                   onCheckedChange={(checked) =>
-                    onSelectUser(user.id, !!checked)
+                    onSelectUser(user._id, !!checked)
                   }
                 />
               </TableCell>
               <TableCell>
                 <div className="font-medium">
-                  {user.first_name} {user.last_name}
+                  {user.firstName} {user.lastName}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {user.email}
@@ -146,25 +151,19 @@ export function UserManagementTab({
                   variant={
                     user.status === "active"
                       ? "default"
-                      : user.status === "pending"
-                        ? "secondary"
-                        : "destructive"
+                      : "destructive"
                   }
                 >
                   {user.status}
                 </Badge>
               </TableCell>
-              <TableCell>{user.user_type}</TableCell>
+              <TableCell>{user.role}</TableCell>
               <TableCell>
-                {new Date(user.created_at).toLocaleDateString()}
+                {new Date(user.createdAt).toLocaleDateString()}
               </TableCell>
               <TableCell>
                 <div className="flex gap-1">
-                  {user.tags?.map((tag) => (
-                    <Badge key={tag} variant="outline">
-                      {tag}
-                    </Badge>
-                  ))}
+                  {/* Tags will need to be implemented */}
                 </div>
               </TableCell>
               <TableCell className="text-right">
@@ -176,23 +175,23 @@ export function UserManagementTab({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem
-                      onClick={() => onUserAction(user.id, "view")}
+                      onClick={() => onUserAction(user._id, "view")}
                     >
                       View Details
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onUserAction(user.id, "activate")}
+                      onClick={() => onUserAction(user._id, "active")}
                     >
                       Activate
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onUserAction(user.id, "block")}
+                      onClick={() => onUserAction(user._id, "blocked")}
                       className="text-red-600"
                     >
                       Block
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onTagUser(user.id, "VIP")}
+                      onClick={() => onTagUser(user._id, "VIP")}
                     >
                       Tag as VIP
                     </DropdownMenuItem>
@@ -203,6 +202,6 @@ export function UserManagementTab({
           ))}
         </TableBody>
       </Table>
-    </TabsContent>
+    </div>
   );
 } 

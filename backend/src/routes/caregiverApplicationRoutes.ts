@@ -2,9 +2,8 @@ import { Router } from 'express';
 import {
     createApplication,
     getMyApplication,
-    listApplications,
     getApplicationById,
-    changeApplicationStatus,
+    updateApplication,
 } from '../controllers/caregiverApplicationController';
 import { protect, authorize } from '../middlewares/authMiddleware';
 
@@ -15,15 +14,13 @@ router.use(protect);
 
 // Routes for a specific user's application
 router.route('/')
-    .post(authorize('caregiver'), createApplication)
-    .get(authorize('caregiver'), getMyApplication);
+    .post(authorize('caregiver'), createApplication);
 
-// Admin-only routes
-router.route('/all')
-    .get(authorize('admin'), listApplications);
+router.route('/my-application')
+    .get(authorize('caregiver'), getMyApplication);
 
 router.route('/:id')
     .get(authorize('admin', 'caregiver'), getApplicationById) // Admins or the user themselves
-    .put(authorize('admin'), changeApplicationStatus);
+    .put(authorize('caregiver', 'admin'), updateApplication);
 
 export default router; 

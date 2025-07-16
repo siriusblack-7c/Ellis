@@ -9,12 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/useAuth';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login, register, isAuthenticated, user } = useAuth();
+  const { login, register, isAuthenticated, user, googleLogin } = useAuth();
   const [loading, setLoading] = useState(false);
 
   // Form states
@@ -43,6 +44,30 @@ export default function Auth() {
     } catch (error: any) {
       toast({
         title: "Sign in failed",
+        description: error.response?.data?.message || error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async (credentialResponse: any) => {
+    setLoading(true);
+    try {
+      if (credentialResponse.credential) {
+        console.log(`credentialResponse ====> `, credentialResponse);
+        await googleLogin(credentialResponse.credential);
+
+
+        toast({
+          title: "Welcome!",
+          description: "You have been signed in successfully with Google.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Google sign in failed",
         description: error.response?.data?.message || error.message,
         variant: "destructive",
       });
@@ -89,7 +114,7 @@ export default function Auth() {
         navigate("/client-dashboard");
       }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, user?.role]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -132,6 +157,26 @@ export default function Auth() {
                       {loading ? "Signing in..." : "Sign In"}
                     </Button>
                   </form>
+                  <div className="mt-6">
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300" />
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-gray-500 dark:bg-gray-900">
+                          Or continue with
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-6 flex justify-center">
+                      <GoogleLogin
+                        onSuccess={handleGoogleLogin}
+                        onError={() => {
+                          console.log('Login Failed');
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
 
@@ -209,6 +254,26 @@ export default function Auth() {
                       {loading ? "Creating account..." : "Create Account"}
                     </Button>
                   </form>
+                  <div className="mt-6">
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300" />
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-gray-500 dark:bg-gray-900">
+                          Or continue with
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-6 flex justify-center">
+                      <GoogleLogin
+                        onSuccess={handleGoogleLogin}
+                        onError={() => {
+                          console.log('Login Failed');
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>

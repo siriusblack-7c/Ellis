@@ -1,19 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, UserCheck, Clock, Shield } from "lucide-react";
+import { User } from "@/types/user";
+import { CaregiverApplication } from "@/types/caregiverApplication";
 
 type DashboardStatsProps = {
-    totalUsers: number;
-    activeUsers: number;
-    pendingApplications: number;
-    verifiedCaregivers: number;
+    users: User[];
+    applications: CaregiverApplication[];
 };
 
-export function DashboardStats({
-    totalUsers,
-    activeUsers,
-    pendingApplications,
-    verifiedCaregivers,
-}: DashboardStatsProps) {
+export function DashboardStats({ users, applications }: DashboardStatsProps) {
+    const totalUsers = users.length;
+    const activeUsers = users.filter(user => user.status === 'active').length;
+    const pendingApplications = applications.filter(app => app.status === 'pending').length;
+    const verifiedCaregivers = applications.filter(app => app.status === 'hired').length;
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>

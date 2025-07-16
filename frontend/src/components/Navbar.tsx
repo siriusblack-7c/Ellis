@@ -39,7 +39,12 @@ export default function Navbar() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      await getProfile();
+      try {
+        await getProfile();
+        
+      } catch (error) {
+        
+      }
     };
     fetchProfile();
   }, []);
@@ -118,11 +123,11 @@ export default function Navbar() {
               ) : (
                 <>
                   <Button asChild className="btn-primary">
-                    <Link to="/auth?mode=signin">Login</Link>
+                    <Link to="/auth">Sign In</Link>
                   </Button>
-                  <Button asChild className="btn-primary">
+                  {/* <Button asChild className="btn-primary">
                     <Link to="/auth?mode=signup">Register</Link>
-                  </Button>
+                  </Button> */}
                 </>
               )}
             </>

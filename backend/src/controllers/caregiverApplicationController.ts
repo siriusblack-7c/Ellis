@@ -14,6 +14,19 @@ export const createApplication = async (req: IRequest, res: Response) => {
     }
 };
 
+export const updateApplication = async (req: IRequest, res: Response) => {
+    try {
+        const application = await applicationService.updateApplication(
+            req.params.id,
+            req.body,
+            req.user!
+        );
+        res.status(200).json(application);
+    } catch (error: any) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
 export const getMyApplication = async (req: IRequest, res: Response) => {
     try {
         const application = await applicationService.getUserApplication(req.user!);
