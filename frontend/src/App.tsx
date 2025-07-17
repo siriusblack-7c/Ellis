@@ -28,6 +28,7 @@ import ApplicationStep5 from "./pages/ApplicationStep5";
 import Settings from "./pages/Settings";
 import CaregiverDashboard from "./pages/CaregiverDashboard";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import AdminPrivateRoute from "./components/AdminPrivateRoute";
 
 // Create a react-query client
 const queryClient = new QueryClient();
@@ -45,12 +46,14 @@ const App = () => (
           <Route path="/client-dashboard" element={<ClientDashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/care-recipients" element={<CareRecipients />} />
-          <Route path="/my-bookings" element={<MyBookings />} />  
+          <Route path="/my-bookings" element={<MyBookings />} />
           <Route path="/book-care" element={<BookCare />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/caregiver-dashboard" element={<CaregiverDashboard />} />
           <Route path="/admin-login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminPrivateRoute />}>
+            <Route path="" element={<AdminDashboard />} />
+          </Route>
           <Route path="/about" element={<About />} />
           <Route path="/caregivers/:id" element={<CaregiverDetails />} />
           <Route path="/gallery" element={<Gallery />} />

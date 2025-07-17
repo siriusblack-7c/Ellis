@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User } from "@/types/user";
-import { MoreHorizontal, Download, Mail } from "lucide-react";
+import { MoreHorizontal, Download, Mail, ArrowUp, ArrowDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -25,47 +25,157 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getAdminUsers, updateAdminUserStatus, addAdminUserTag } from "@/api/adminApi";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
-type UserManagementTabProps = {
-  users: User[];
-  selectedUsers: string[];
-  onSelectUser: (userId: string, isSelected: boolean) => void;
-  onSelectAllUsers: (isSelected: boolean) => void;
-  onUserAction: (userId: string, action: string) => void;
-  onTagUser: (userId: string, tag: string) => void;
-  searchTerm: string;
-  onSearchTermChange: (term: string) => void;
-  filterStatus: string;
-  onFilterStatusChange: (status: string) => void;
-  sortBy: string;
-  onSortByChange: (sortBy: string) => void;
-  onExport: () => void;
-  onContact: () => void;
-  isLoading: boolean;
-};
+export function UserManagementTab() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-export function UserManagementTab({
-  users,
-  selectedUsers,
-  onSelectUser,
-  onSelectAllUsers,
-  onUserAction,
-  onTagUser,
-  searchTerm,
-  onSearchTermChange,
-  filterStatus,
-  onFilterStatusChange,
-  sortBy,
-  onSortByChange,
-  onExport,
-  onContact,
-  isLoading,
-}: UserManagementTabProps) {
+  const { data: users = [], isLoading } = useQuery<User[]>({
+    queryKey: ['adminUsers'],
+    queryFn: getAdminUsers,
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ userId, status }: { userId: string; status: string }) =>
+      updateAdminUserStatus(userId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      toast({
+        title: "Success",
+        description: "User status updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update user status.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const tagMutation = useMutation({
+    mutationFn: ({ userId, tag }: { userId: string; tag: string }) =>
+      addAdminUserTag(userId, tag),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      toast({
+        title: "Success",
+        description: "User tagged successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to tag user.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useState("date");
+  const [sortDirection, setSortDirection] = useState("desc");
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [selectedUserForDetails, setSelectedUserForDetails] = useState<User | null>(null);
+
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const handleSelectUser = (userId: string, isSelected: boolean) => {
+    setSelectedUsers((prev) =>
+      isSelected ? [...prev, userId] : prev.filter((id) => id !== userId)
+    );
+  };
+
+  const handleSelectAllUsers = (isSelected: boolean) => {
+    setSelectedUsers(isSelected ? filteredUsers.map((u) => u._id) : []);
+  };
+
+  const handleUserAction = (userId: string, action: string) => {
+    if (action === 'active' || action === 'blocked') {
+      statusMutation.mutate({ userId, status: action });
+    } else if (action === 'view') {
+      const user = users.find(u => u._id === userId);
+      if (user) {
+        setSelectedUserForDetails(user);
+        setIsDetailsDialogOpen(true);
+      }
+    } else {
+      console.log(`User ${userId} action: ${action}`);
+    }
+  };
+
+  const handleTagUser = (userId: string, tag: string) => {
+    tagMutation.mutate({ userId, tag });
+  };
+
+  const onExport = () => {
+    console.log("Exporting users");
+  };
+
+  const onContact = () => {
+    console.log("Contacting users");
+  };
+
+  const filteredUsers = users
+    .filter(
+      (user) => filterStatus === "all" || user.status === filterStatus
+    )
+    .filter(
+      (user) =>
+        user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const isAsc = sortDirection === 'asc';
+      switch (sortBy) {
+        case 'name':
+          return isAsc
+            ? a.firstName.localeCompare(b.firstName)
+            : b.firstName.localeCompare(a.firstName);
+        case 'date':
+          return isAsc
+            ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'type':
+          return isAsc
+            ? a.role.localeCompare(b.role)
+            : b.role.localeCompare(a.role);
+        case 'status':
+          return isAsc
+            ? a.status.localeCompare(b.status)
+            : b.status.localeCompare(a.status);
+        default:
+          return 0;
+      }
+    });
+
   const isAllSelected =
-    users.length > 0 && selectedUsers.length === users.length;
+    filteredUsers.length > 0 && selectedUsers.length === filteredUsers.length;
 
   if (isLoading) {
-    return <div>Loading users...</div>;
+    return <div>Loading...</div>;
   }
 
   return (
@@ -75,10 +185,10 @@ export function UserManagementTab({
           <Input
             placeholder="Search users..."
             value={searchTerm}
-            onChange={(e) => onSearchTermChange(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64"
           />
-          <Select value={filterStatus} onValueChange={onFilterStatusChange}>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -86,16 +196,6 @@ export function UserManagementTab({
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="blocked">Blocked</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={onSortByChange}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="date">Join Date</SelectItem>
-              <SelectItem value="type">User Type</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -116,25 +216,45 @@ export function UserManagementTab({
             <TableHead className="w-[40px]">
               <Checkbox
                 checked={isAllSelected}
-                onCheckedChange={(checked) => onSelectAllUsers(!!checked)}
+                onCheckedChange={(checked) => handleSelectAllUsers(!!checked)}
               />
             </TableHead>
-            <TableHead>User</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Joined</TableHead>
+            <TableHead>
+              <Button variant="ghost" onClick={() => handleSort('name')}>
+                User
+                {sortBy === 'name' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button variant="ghost" onClick={() => handleSort('status')}>
+                Status
+                {sortBy === 'status' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button variant="ghost" onClick={() => handleSort('type')}>
+                Type
+                {sortBy === 'type' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button variant="ghost" onClick={() => handleSort('date')}>
+                Joined
+                {sortBy === 'date' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
+              </Button>
+            </TableHead>
             <TableHead>Tags</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <TableRow key={user._id}>
               <TableCell>
                 <Checkbox
                   checked={selectedUsers.includes(user._id)}
                   onCheckedChange={(checked) =>
-                    onSelectUser(user._id, !!checked)
+                    handleSelectUser(user._id, !!checked)
                   }
                 />
               </TableCell>
@@ -162,36 +282,39 @@ export function UserManagementTab({
                 {new Date(user.createdAt).toLocaleDateString()}
               </TableCell>
               <TableCell>
-                <div className="flex gap-1">
-                  {/* Tags will need to be implemented */}
-                </div>
+                {user.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="mr-1">
+                    {tag}
+                  </Badge>
+                ))}
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <span className="sr-only">Open menu</span>
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent>
+                  <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onClick={() => onUserAction(user._id, "view")}
+                      onClick={() => handleUserAction(user._id, "view")}
                     >
                       View Details
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onUserAction(user._id, "active")}
+                      onClick={() => handleUserAction(user._id, "active")}
                     >
                       Activate
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onUserAction(user._id, "blocked")}
+                      onClick={() => handleUserAction(user._id, "blocked")}
                       className="text-red-600"
                     >
                       Block
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onTagUser(user._id, "VIP")}
+                      onClick={() => handleTagUser(user._id, "vip")}
                     >
                       Tag as VIP
                     </DropdownMenuItem>
@@ -202,6 +325,59 @@ export function UserManagementTab({
           ))}
         </TableBody>
       </Table>
+
+      {selectedUserForDetails && (
+        <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>User Details</DialogTitle>
+              <DialogDescription>
+                Detailed information for {selectedUserForDetails.firstName} {selectedUserForDetails.lastName}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right font-semibold">Name:</span>
+                <span className="col-span-3">{selectedUserForDetails.firstName} {selectedUserForDetails.lastName}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right font-semibold">Email:</span>
+                <span className="col-span-3">{selectedUserForDetails.email}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right font-semibold">Phone:</span>
+                <span className="col-span-3">{selectedUserForDetails.phoneNumber}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right font-semibold">Address:</span>
+                <span className="col-span-3">
+                  {selectedUserForDetails.address1}, {selectedUserForDetails.city}, {selectedUserForDetails.state} {selectedUserForDetails.zip}, {selectedUserForDetails.country}
+                </span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right font-semibold">Role:</span>
+                <span className="col-span-3">{selectedUserForDetails.role}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right font-semibold">Status:</span>
+                <span className="col-span-3">{selectedUserForDetails.status}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right font-semibold">Joined:</span>
+                <span className="col-span-3">{new Date(selectedUserForDetails.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right font-semibold">Tags:</span>
+                <span className="col-span-3">{selectedUserForDetails.tags.join(', ')}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <span className="text-right font-semibold">Bio:</span>
+                <span className="col-span-3">{selectedUserForDetails.bio}</span>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 } 

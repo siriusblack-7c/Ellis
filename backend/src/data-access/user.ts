@@ -23,8 +23,12 @@ export const findAll = async (): Promise<IUser[]> => {
 
 export const updateById = async (id: string, userData: Partial<IUser>): Promise<IUser | null> => {
     return User.findByIdAndUpdate(id, userData, { new: true });
-}; 
+};
 
 export const findUserByGoogleId = async (googleId: string): Promise<IUser | null> => {
     return User.findOne({ googleId });
+};
+
+export const addTag = async (id: string, tag: string): Promise<IUser | null> => {
+    return User.findByIdAndUpdate(id, { $addToSet: { tags: tag } }, { new: true });
 };

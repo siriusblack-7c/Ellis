@@ -5,5 +5,9 @@ export const getAllUsers = async () => {
 };
 
 export const updateUserStatus = async (id: string, status: string) => {
-    return userDataAccess.updateById(id, { status });
+    return userDataAccess.updateById(id, { status } as any);
+};
+
+export const addTagToUser = async (id: string, tag: string) => {
+    return userDataAccess.addTag(id, tag);
 }; 

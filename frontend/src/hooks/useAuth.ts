@@ -8,12 +8,12 @@ export const useAuth = () => {
     if (!context) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
-    const { login, register, logout, isAuthenticated, loading, user, getProfile, googleLogin } = context;
+    const { login, register, logout, isAuthenticated, loading, user, getProfile, googleLogin, adminLogin, adminLogout } = context;
 
     const updateUser = async (userData: Partial<User>) => {
         const response = await authApi.updateProfile(userData as FormData);
         return response;
     };
 
-    return { login, register, logout, isAuthenticated, loading, user, updateUser, getProfile, googleLogin };
+    return { login, register, logout, isAuthenticated, loading, user, updateUser, getProfile, googleLogin, adminLogin, adminLogout };
 }; 

@@ -1,13 +1,13 @@
 export type UserRole = 'client' | 'caregiver' | 'admin';
 
 export interface User {
-    id: string;
+    _id: string;
     email: string;
     firstName: string;
     lastName: string;
     phoneNumber: string;
     role: string;
-    avatar: string; 
+    avatar: string;
     address1: string;
     city: string;
     state: string;

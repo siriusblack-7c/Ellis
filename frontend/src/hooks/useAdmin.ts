@@ -1,28 +1,45 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-    getAllApplications,
-    getAllUsers,
-    changeApplicationStatus,
-    updateUserStatus
-} from "@/api/adminApi";
+import { getAdminApplications, getAdminUsers, updateAdminApplicationStatus, updateAdminUserStatus } from "@/api/adminApi";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "./useAuth";
 
 export const useAdmin = () => {
     const queryClient = useQueryClient();
     const { toast } = useToast();
+    const { adminLogin } = useAuth();
 
     const { data: users = [], isLoading: isLoadingUsers } = useQuery({
         queryKey: ['users'],
-        queryFn: getAllUsers
+        queryFn: getAdminUsers
     });
 
     const { data: applications = [], isLoading: isLoadingApplications } = useQuery({
         queryKey: ['applications'],
-        queryFn: getAllApplications
+        queryFn: getAdminApplications
     });
 
+    const adminLoginHook = async (email: string, password: string) => {
+        try {
+            const response = await adminLogin(email, password);
+            if (response as any) {
+                toast({
+                    title: "Login successful",
+                    description: "Welcome to the admin dashboard.",
+                });
+                return response;
+            } else {
+                throw new Error('Invalid admin credentials');
+            }
+        } catch (error: any) {
+            toast({
+                title: "Login failed",
+                description: "Invalid admin credentials.",
+                variant: "destructive",
+            });
+        }
+    };
     const applicationStatusMutation = useMutation({
-        mutationFn: ({ id, status }: { id: string, status: string }) => changeApplicationStatus(id, status),
+        mutationFn: ({ id, status }: { id: string, status: string }) => updateAdminApplicationStatus(id, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['applications'] });
             toast({
@@ -40,7 +57,7 @@ export const useAdmin = () => {
     });
 
     const userStatusMutation = useMutation({
-        mutationFn: ({ id, status }: { id: string, status: string }) => updateUserStatus(id, status),
+        mutationFn: ({ id, status }: { id: string, status: string }) => updateAdminUserStatus(id, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
             toast({
@@ -63,6 +80,7 @@ export const useAdmin = () => {
         applications,
         isLoadingApplications,
         updateApplicationStatus: applicationStatusMutation.mutate,
-        updateUserStatus: userStatusMutation.mutate
+        updateUserStatus: userStatusMutation.mutate,
+        adminLogin: adminLoginHook
     };
 }; 

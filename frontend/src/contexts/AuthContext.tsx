@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import authApi from '../api/authApi'; // API -> Backend
+import { adminLoginApi } from '../api/adminApi';
+import authApi from '../api/authApi';
 import { RegisterRequest, User } from '../types/user';
 
 interface AuthContextType {
@@ -13,6 +14,8 @@ interface AuthContextType {
     loading: boolean;
     updateUser: (formData: FormData) => Promise<void>;
     getProfile: () => Promise<User>;
+    adminLogin: (email: string, password: string) => Promise<void>;
+    adminLogout: () => void;
 }
 
 
@@ -82,8 +85,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return response;
     };
 
+    const adminLogin = async (email: string, password: string) => {
+        const response = await adminLoginApi(email, password);
+        localStorage.setItem('user_auth', JSON.stringify(response));
+        localStorage.setItem('token', response.token);
+        setUser(response);
+        setToken(response.token);
+        return response;
+    };
+
+    const adminLogout = () => {
+        localStorage.removeItem('user_auth');
+        localStorage.removeItem('token');
+        setUser(null);
+        setToken(null);
+    };
+
     return (
-        <AuthContext.Provider value={{ isAuthenticated: !!token, user, token, login, register, googleLogin, logout, loading, updateUser, getProfile }}>
+        <AuthContext.Provider value={{ isAuthenticated: !!token, user, token, login, register, googleLogin, logout, loading, updateUser, getProfile, adminLogin, adminLogout }}>
             {children}
         </AuthContext.Provider>
     );

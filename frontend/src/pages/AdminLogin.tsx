@@ -4,36 +4,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
 import { Shield } from "lucide-react";
+import { useAdmin } from "@/hooks/useAdmin";
 
 export default function AdminLogin() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
+  const { adminLogin } = useAdmin();
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    // Mock admin authentication
-    if (email === "admin@gmail.com" && password === "admin") {
-      localStorage.setItem('admin_auth', 'true');
-      toast({
-        title: "Login successful",
-        description: "Welcome to the admin dashboard.",
-      });
-      navigate("/admin");
-    } else {
-      toast({
-        title: "Login failed",
-        description: "Invalid admin credentials.",
-        variant: "destructive",
-      });
+    try {
+      let response = await adminLogin(email, password);
+      if (response as any) {
+        navigate("/admin");
+      } else {
+        throw new Error('Invalid admin credentials');
+      }
+    } catch (error) {
+      console.error(error.message);
     }
-
     setLoading(false);
   };
 

@@ -22,57 +22,57 @@ export const mockUsers: MockUser[] = [
     firstName: 'John',
     lastName: 'Doe',
     email: 'john@example.com',
-    user_type: 'client',
+    role: 'client',
     status: 'active',
-    created_at: '2024-01-15',
+    createdAt: '2024-01-15',
     phone: '+1234567890',
     city: 'New York',
     country: 'USA'
   },
   {
-    id: '2',
+    _id: '2',
     firstName: 'Jane',
     lastName: 'Smith',
     email: 'jane@example.com',
-    user_type: 'caregiver',
+    role: 'caregiver',
     status: 'active',
-    created_at: '2024-02-20',
+    createdAt: '2024-02-20',
     phone: '+1234567891',
     city: 'Los Angeles',
     country: 'USA'
   },
   {
-    id: '3',
+    _id: '3',
     firstName: 'Mike',
     lastName: 'Johnson',
     email: 'mike@example.com',
-    user_type: 'client',
+    role: 'client',
     status: 'blocked',
-    created_at: '2024-03-10',
+    createdAt: '2024-03-10',
     phone: '+1234567892',
     city: 'Chicago',
     country: 'USA'
   },
   {
-    id: '4',
-    first_name: 'Sarah',
-    last_name: 'Wilson',
+    _id: '4',
+    firstName: 'Sarah',
+    lastName: 'Wilson',
     email: 'sarah@example.com',
-    user_type: 'caregiver',
+    role: 'caregiver',
     status: 'pending',
-    created_at: '2024-03-25',
+    createdAt: '2024-03-25',
     phone: '+1234567893',
     city: 'Miami',
     country: 'USA'
   },
   {
-    id: '5',
-    first_name: 'David',
-    last_name: 'Brown',
+    _id: '5',
+    firstName: 'David',
+    lastName: 'Brown',
     email: 'david@example.com',
-    user_type: 'caregiver',
+    role: 'caregiver',
     status: 'active',
-    created_at: '2024-04-05',
+    createdAt: '2024-04-05',
     phone: '+1234567894',
     city: 'Seattle',
     country: 'USA'
@@ -82,78 +82,78 @@ export const mockUsers: MockUser[] = [
 export type ApplicationStatus = 'approved' | 'pending' | 'under_review' | 'rejected';
 
 export interface MockApplication {
-  id: string;
-  user_id: string;
+  _id: string;
+  userId: string;
   status: ApplicationStatus;
-  years_experience: number;
-  preferred_work_location: string;
+  yearsExperience: number;
+  preferredWorkLocation: string;
   specialties: string[];
   certifications: string[];
-  created_at: string;
-  documents_verified: boolean;
+  createdAt: string;
+  documentsVerified: boolean;
 }
 
 export const mockApplications: MockApplication[] = [
   {
-    id: '1',
-    user_id: '2',
+    _id: '1',
+    userId: '2',
     status: 'approved',
-    years_experience: 5,
-    preferred_work_location: 'Los Angeles',
+    yearsExperience: 5,
+    preferredWorkLocation: 'Los Angeles',
     specialties: ['Elderly Care', 'Dementia Care'],
     certifications: ['CNA', 'CPR'],
-    created_at: '2024-02-20',
-    documents_verified: true
+    createdAt: '2024-02-20',
+    documentsVerified: true
   },
   {
-    id: '2',
-    user_id: '4',
+    _id: '2',
+    userId: '4',
     status: 'pending',
-    years_experience: 3,
-    preferred_work_location: 'Miami',
+    yearsExperience: 3,
+    preferredWorkLocation: 'Miami',
     specialties: ['Personal Care', 'Companionship'],
     certifications: ['CNA'],
-    created_at: '2024-03-25',
-    documents_verified: false
+    createdAt: '2024-03-25',
+    documentsVerified: false
   },
   {
-    id: '3',
-    user_id: '5',
+    _id: '3',
+    userId: '5',
     status: 'under_review',
-    years_experience: 7,
-    preferred_work_location: 'Seattle',
+    yearsExperience: 7,
+    preferredWorkLocation: 'Seattle',
     specialties: ['Post-Surgery Care', 'Medication Management'],
     certifications: ['RN', 'CPR', 'First Aid'],
-    created_at: '2024-04-05',
-    documents_verified: true
+    createdAt: '2024-04-05',
+    documentsVerified: true
   }
 ];
 
 export const mockActivity = [
   {
-    id: '1',
-    user_id: '1',
+    _id: '1',
+    userId: '1',
     action: 'Login',
     timestamp: '2024-07-12T10:30:00Z',
     details: 'User logged in from New York'
   },
   {
-    id: '2',
-    user_id: '2',
+    _id: '2',
+    userId: '2',
     action: 'Profile Update',
     timestamp: '2024-07-12T09:15:00Z',
     details: 'Updated contact information'
   },
   {
-    id: '3',
-    user_id: '3',
+    _id: '3',
+    userId: '3',
     action: 'Booking Created',
     timestamp: '2024-07-11T16:45:00Z',
     details: 'Created new care booking'
   },
   {
-    id: '4',
-    user_id: '4',
+    _id: '4',
+    userId: '4',
     action: 'Application Submitted',
     timestamp: '2024-07-11T14:20:00Z',
     details: 'Submitted caregiver application'
@@ -178,55 +178,55 @@ export const mockStats = {
 
 // Mock care recipients data
 export interface MockCareRecipient {
-  id: string;
+  _id: string;
   name: string;
   age: number;
   location: string;
-  care_needs: string[];
-  medical_conditions: string[];
-  emergency_contact_name: string;
-  emergency_contact_phone: string;
-  special_requirements?: string;
-  mobility_level: string;
-  preferred_language: string;
-  created_at: string;
+  careNeeds: string[];
+  medicalConditions: string[];
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  specialRequirements?: string;
+  mobilityLevel: string;
+  preferredLanguage: string;
+  createdAt: string;
 }
 
 export const mockCareRecipients: MockCareRecipient[] = [
   {
-    id: "1",
+    _id: "1",
     name: "Eleanor Doe",
     age: 82,
     location: "New York, NY",
-    care_needs: ["Personal Care", "Medication Management", "Companionship"],
-    medical_conditions: ["Diabetes", "Mild Dementia"],
-    emergency_contact_name: "John Doe",
-    emergency_contact_phone: "+1234567890",
-    special_requirements: "Prefers female caregivers, needs help with evening medications",
-    mobility_level: "Limited - Wheelchair",
-    preferred_language: "English",
-    created_at: "2024-01-15"
+    careNeeds: ["Personal Care", "Medication Management", "Companionship"],
+    medicalConditions: ["Diabetes", "Mild Dementia"],
+    emergencyContactName: "John Doe",
+    emergencyContactPhone: "+1234567890",
+    specialRequirements: "Prefers female caregivers, needs help with evening medications",
+    mobilityLevel: "Limited - Wheelchair",
+    preferredLanguage: "English",
+    createdAt: "2024-01-15"
   },
   {
-    id: "2",
+    _id: "2",
     name: "Robert Johnson",
     age: 75,
     location: "New York, NY",
-    care_needs: ["Meal Preparation", "Light Housekeeping", "Transportation"],
-    medical_conditions: ["Heart Condition", "Arthritis"],
-    emergency_contact_name: "Mary Johnson",
-    emergency_contact_phone: "+1234567891",
-    special_requirements: "Needs low-sodium diet, enjoys crossword puzzles",
-    mobility_level: "Good - Uses Walker",
-    preferred_language: "English",
-    created_at: "2024-02-20"
+    careNeeds: ["Meal Preparation", "Light Housekeeping", "Transportation"],
+    medicalConditions: ["Heart Condition", "Arthritis"],
+    emergencyContactName: "Mary Johnson",
+    emergencyContactPhone: "+1234567891",
+    specialRequirements: "Needs low-sodium diet, enjoys crossword puzzles",
+    mobilityLevel: "Good - Uses Walker",
+    preferredLanguage: "English",
+    createdAt: "2024-02-20"
   }
 ];
 
 // Mock data for caregiver jobs
 export const mockCaregiverJobs = [
   {
-    id: "job-001",
+    _id: "job-001",
     clientName: "Margaret Thompson",
     location: "Downtown, NY",
     schedule: "Mon-Fri, 9 AM - 5 PM",
@@ -236,7 +236,7 @@ export const mockCaregiverJobs = [
     careRequirements: ["Medication Management", "Mobility Assistance", "Companionship"],
   },
   {
-    id: "job-002",
+    _id: "job-002",
     clientName: "Robert Wilson",
     location: "Brooklyn, NY",
     schedule: "Weekends, 10 AM - 6 PM",
@@ -261,7 +261,7 @@ export const mockCaregiverStats = {
 
 // Mock gallery images data
 export interface MockGalleryImage {
-  id: string;
+  _id: string;
   src: string;
   alt: string;
   caption: string;
@@ -272,7 +272,7 @@ export interface MockGalleryImage {
 
 export const mockGalleryImages: MockGalleryImage[] = [
   {
-    id: "1",
+    _id: "1",
     src: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=600&h=400&fit=crop",
     alt: "Caregiver assisting elderly woman with a walker",
     caption: "Providing mobility support with a caring touch",
@@ -281,7 +281,7 @@ export const mockGalleryImages: MockGalleryImage[] = [
     isActive: true,
   },
   {
-    id: "2",
+    _id: "2",
     src: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=400&fit=crop",
     alt: "Caregiver and elderly man playing a board game",
     caption: "Engaging in stimulating activities and companionship",
@@ -290,7 +290,7 @@ export const mockGalleryImages: MockGalleryImage[] = [
     isActive: true,
   },
   {
-    id: "3",
+    _id: "3",
     src: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&h=400&fit=crop",
     alt: "Caregiver preparing a healthy meal for a client",
     caption: "Nutritious and delicious meals, prepared with care",
@@ -299,7 +299,7 @@ export const mockGalleryImages: MockGalleryImage[] = [
     isActive: true,
   },
   {
-    id: "4",
+    _id: "4",
     src: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=600&h=400&fit=crop",
     alt: "Caregiver reading a book to an elderly woman",
     caption: "Sharing stories and moments of connection",
@@ -308,7 +308,7 @@ export const mockGalleryImages: MockGalleryImage[] = [
     isActive: true,
   },
   {
-    id: "5",
+    _id: "5",
     src: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=600&h=400&fit=crop",
     alt: "Modern care facility interior",
     caption: "Comfortable and safe living spaces",
@@ -317,7 +317,7 @@ export const mockGalleryImages: MockGalleryImage[] = [
     isActive: true,
   },
   {
-    id: "6",
+    _id: "6",
     src: "https://images.unsplash.com/photo-1485833077593-4278bba3f11f?w=600&h=400&fit=crop",
     alt: "Professional care team",
     caption: "Our dedicated and trained care professionals",
@@ -326,7 +326,7 @@ export const mockGalleryImages: MockGalleryImage[] = [
     isActive: false,
   },
   {
-    id: "7",
+    _id: "7",
     src: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop",
     alt: "Elderly woman exercising with assistance",
     caption: "Promoting active and healthy lifestyles",
@@ -335,7 +335,7 @@ export const mockGalleryImages: MockGalleryImage[] = [
     isActive: true,
   },
   {
-    id: "8",
+    _id: "8",
     src: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&h=400&fit=crop",
     alt: "Comfortable bedroom in care facility",
     caption: "Private, comfortable accommodation",
@@ -347,7 +347,7 @@ export const mockGalleryImages: MockGalleryImage[] = [
 
 // Mock data for client workflow
 export interface MockClientWorkflowStep {
-  id: string;
+  _id: string;
   titleKey: string;
   descriptionKey: string;
   icon: string;
@@ -355,25 +355,25 @@ export interface MockClientWorkflowStep {
 
 export const mockClientWorkflow: MockClientWorkflowStep[] = [
   {
-    id: 'step1',
+    _id: 'step1',
     titleKey: 'clientDashboard.workflow.step1.title',
     descriptionKey: 'clientDashboard.workflow.step1.description',
     icon: 'Search',
   },
   {
-    id: 'step2',
+    _id: 'step2',
     titleKey: 'clientDashboard.workflow.step2.title',
     descriptionKey: 'clientDashboard.workflow.step2.description',
     icon: 'FileText',
   },
   {
-    id: 'step3',
+    _id: 'step3',
     titleKey: 'clientDashboard.workflow.step3.title',
     descriptionKey: 'clientDashboard.workflow.step3.description',
     icon: 'Users',
   },
   {
-    id: 'step4',
+    _id: 'step4',
     titleKey: 'clientDashboard.workflow.step4.title',
     descriptionKey: 'clientDashboard.workflow.step4.description',
     icon: 'CheckCircle2',

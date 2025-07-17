@@ -3,7 +3,7 @@ import {
     listApplications,
     changeApplicationStatus,
 } from '../controllers/caregiverApplicationController';
-import { getAllUsers, updateUserStatus } from '../controllers/userController';
+import { getAllUsers, updateUserStatus, updateUserTags } from '../controllers/userController';
 import { protect, authorize } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -14,6 +14,7 @@ router.use(protect, authorize('admin'));
 // User management routes
 router.get('/users', getAllUsers);
 router.put('/users/:id/status', updateUserStatus);
+router.put('/users/:id/tags', updateUserTags);
 
 // Application management routes
 router.get('/applications', listApplications);

@@ -2,8 +2,10 @@ import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export type UserRole = 'client' | 'caregiver' | 'admin';
+export type UserStatus = 'active' | 'pending' | 'blocked';
 
 export interface IUser extends Document {
+    _id: string;
     googleId?: string;
     firstName: string;
     lastName: string;
@@ -11,8 +13,9 @@ export interface IUser extends Document {
     password?: string;
     phoneNumber?: string;
     role: UserRole;
+    status: UserStatus;
     createdAt: Date;
-    updatedAt: Date;    
+    updatedAt: Date;
 }
 
 const UserSchema: Schema = new Schema(
@@ -33,7 +36,7 @@ const UserSchema: Schema = new Schema(
         password: { type: String, required: true, select: false },
         phoneNumber: { type: String },
         role: { type: String, enum: ['client', 'caregiver', 'admin'], default: 'client' },
-        status: { type: String, enum: ['active', 'pending', 'blocked'], default: 'pending' },
+        status: { type: String, enum: ['active', 'pending', 'blocked'], default: 'active' },
         tags: { type: [String] },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },

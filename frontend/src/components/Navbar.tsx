@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import ThemeToggle from "./ThemeToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import Logo from "./Logo";
 import UserDropdown from "./UserDropdown";
 import { Button } from "@/components/ui/button";
@@ -27,14 +27,14 @@ export default function Navbar() {
     { name: "How It Works", path: "/#how-it-works" },
     { name: "FAQs", path: "/#faq" },
     { name: "Services", path: "/#services" },
-    { name: "Gallery", path: "/gallery" },
+    // { name: "Gallery", path: "/gallery" },
     { name: "Caregivers", path: "/caregivers" },
     { name: "Careers", path: "/careers" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
-    { name: "Caregivers Dashboard", path: "/caregiver-dashboard" },
-    { name: "Clients Dashboard", path: "/client-dashboard" },
-    { name: "Admin Dashboard", path: "/admin" },
+    // { name: "Caregivers Dashboard", path: "/caregiver-dashboard" },
+    // { name: "Clients Dashboard", path: "/client-dashboard" },
+    // { name: "Admin Dashboard", path: "/admin" },
   ];
 
   useEffect(() => {

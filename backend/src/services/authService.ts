@@ -6,8 +6,14 @@ import config from '../config';
 
 const client = new OAuth2Client(config.googleClientId);
 
-const generateToken = (id: string) => {
-    return jwt.sign({ id }, config.jwtSecret, {
+const generateToken = (user: IUser) => {
+    return jwt.sign({
+        id: user._id,
+        role: user.role,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+    }, config.jwtSecret, {
         expiresIn: '30d',
     });
 };
@@ -35,7 +41,7 @@ export const register = async (userData: Partial<IUser>) => {
             email: user.email,
             role: user.role,
             phoneNumber: user.phoneNumber,
-            token: generateToken(user._id as string),
+            token: generateToken(user),
         };
     } else {
         throw new Error('Invalid user data');
@@ -59,7 +65,7 @@ export const login = async (userData: Partial<IUser>) => {
             email: user.email,
             role: user.role,
             phoneNumber: user.phoneNumber,
-            token: generateToken(user._id as string),
+            token: generateToken(user),
         };
     } else {
         throw new Error('Invalid credentials');
@@ -106,7 +112,7 @@ export const googleLogin = async (token: string) => {
             email: user.email,
             role: user.role,
             phoneNumber: user.phoneNumber,
-            token: generateToken(user._id as string),
+            token: generateToken(user),
         };
     } else {
         throw new Error('Could not login with Google');
@@ -143,3 +149,27 @@ export const getProfile = async (userId: string) => {
     }
     return user;
 };
+
+export const adminLogin = async (userData: Partial<IUser>) => {
+    const { email, password } = userData;
+
+    if (!email || !password) {
+        throw new Error('Please provide email and password');
+    }
+
+    if (email === 'admin@admin.com' && password === 'admin') {
+        const adminUser = {
+            _id: 'admin',
+            firstName: 'Admin',
+            lastName: 'Admin',
+            email: 'admin@admin.com',
+            role: 'admin',
+        } as IUser;
+        return {
+            ...adminUser,
+            token: generateToken(adminUser),
+        };
+    } else {
+        throw new Error('Invalid credentials');
+    }
+}

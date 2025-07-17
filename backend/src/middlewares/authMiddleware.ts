@@ -21,23 +21,36 @@ export const protect = async (req: IRequest, res: Response, next: NextFunction) 
             token = req.headers.authorization.split(' ')[1];
 
             // Verify token
-            const decoded = jwt.verify(token, config.jwtSecret) as { id: string };
+            const decoded = jwt.verify(token, config.jwtSecret) as IUser;
 
-            // Get user from the token
-            req.user = await findUserById(decoded.id);
+            // If user is admin, trust the token and avoid DB lookup
+            if (decoded.role === 'admin') {
+                req.user = decoded;
+                return next();
+            }
 
-            if (!req.user) {
+            // For other users, verify they exist in the DB
+            const user = await findUserById(decoded.id);
+            if (user?.status === 'blocked') {
+                return res.status(401).json({ message: 'Not authorized, user is blocked' });
+            }
+            if (!user) {
+                console.log(decoded, 'decoded');
+                console.log('User not found');
                 return res.status(401).json({ message: 'Not authorized, user not found' });
             }
 
+            req.user = user;
+
             next();
         } catch (error) {
-            console.error(error);
+            console.error(error, 'Token failed');
             res.status(401).json({ message: 'Not authorized, token failed' });
         }
     }
 
     if (!token) {
+        console.log('No token');
         res.status(401).json({ message: 'Not authorized, no token' });
     }
 };

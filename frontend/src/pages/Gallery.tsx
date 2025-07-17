@@ -55,7 +55,7 @@ export default function Gallery() {
                     onClick={() => setSelectedCategory(category)}
                     className="capitalize hover-scale"
                   >
-                    {category} 
+                    {category}
                     <Badge variant="secondary" className="ml-2">
                       {categoryCount(category)}
                     </Badge>
@@ -67,15 +67,15 @@ export default function Gallery() {
             {/* Gallery Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredImages.map((image) => (
-                <div 
-                  key={image.id} 
+                <div
+                  key={image.id}
                   className="group relative overflow-hidden rounded-lg shadow-lg animate-fade-in hover-scale"
                 >
                   <div className="aspect-video">
-                    <img 
-                      src={image.src} 
-                      alt={image.alt} 
-                      className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-110" 
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-110"
                     />
                   </div>
                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
