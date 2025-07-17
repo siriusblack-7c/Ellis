@@ -4,10 +4,22 @@ import { IRequest } from '../middlewares/authMiddleware';
 
 export const createApplication = async (req: IRequest, res: Response) => {
     try {
-        const application = await applicationService.applyToBeCaregiver(
-            req.body,
-            req.user!
-        );
+        if (!req.user) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
+        const { preferredWorkLocation, coverLetter, availability } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({ message: 'Resume is required' });
+        }
+
+        const application = await applicationService.createApplication({
+            preferredWorkLocation,
+            coverLetter,
+            availability,
+            resume: req.file.filename,
+        }, req.user);
         res.status(201).json(application);
     } catch (error: any) {
         res.status(400).json({ message: error.message });

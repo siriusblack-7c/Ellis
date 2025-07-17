@@ -21,7 +21,7 @@ export interface ICaregiverApplication extends Document {
     };
     specialties?: string[];
     certifications?: string[];
-    cvUrl?: string;
+    resume?: string;
     coverLetter?: string;
     certificationFilesUrls?: string[];
     videoInterviewUrl?: string;
@@ -66,7 +66,7 @@ const CaregiverApplicationSchema: Schema = new Schema(
         certifications: {
             type: [String],
         },
-        cvUrl: {
+        resume: {
             type: String,
         },
         coverLetter: {

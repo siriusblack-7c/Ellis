@@ -52,7 +52,7 @@ export const changePassword = async (req: IRequest, res: Response) => {
     } catch (error: any) {
         res.status(400).json({ message: error.message });
     }
-} 
+}
 
 export const getProfile = async (req: IRequest, res: Response) => {
     try {

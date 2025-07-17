@@ -3,7 +3,7 @@ import { ICaregiverApplication, ApplicationStatus } from '../models/CaregiverApp
 import { IUser } from '../models/User';
 import mongoose from 'mongoose';
 
-export const applyToBeCaregiver = async (
+export const createApplication = async (
     data: Partial<ICaregiverApplication>,
     user: IUser
 ) => {
@@ -18,7 +18,7 @@ export const applyToBeCaregiver = async (
         throw new Error('You have already submitted an application.');
     }
 
-    data.userId = user._id;
+    data.userId = new mongoose.Types.ObjectId(user._id);
     return applicationDataAccess.create(data);
 };
 

@@ -9,7 +9,6 @@ import UserDropdown from "./UserDropdown";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
-import authApi from "@/api/authApi";
 
 export default function Navbar() {
   const { t } = useLanguage();
@@ -32,6 +31,7 @@ export default function Navbar() {
     { name: "Careers", path: "/careers" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
+    { name: "Dashboard", path: user?.role === "admin" ? "/admin" : user?.role === "caregiver" ? "/caregiver-dashboard" : "/client-dashboard" },
     // { name: "Caregivers Dashboard", path: "/caregiver-dashboard" },
     // { name: "Clients Dashboard", path: "/client-dashboard" },
     // { name: "Admin Dashboard", path: "/admin" },

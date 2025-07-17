@@ -6,10 +6,10 @@ export const addRecipient = async (
     data: Partial<ICareRecipient>,
     clientId: mongoose.Types.ObjectId
 ) => {
-    if (!data.name || !data.age || !data.care_needs || !data.location) {
+    if (!data.name || !data.age || !data.careNeeds || !data.location) {
         throw new Error('Missing required fields');
     }
-    data.client_id = clientId;
+    data.clientId = clientId;
     return careRecipientDataAccess.create(data);
 };
 
@@ -24,7 +24,7 @@ export const getRecipientDetails = async (
     clientId: mongoose.Types.ObjectId
 ) => {
     const recipient = await careRecipientDataAccess.findById(recipientId);
-    if (!recipient || !recipient.client_id.equals(clientId)) {
+    if (!recipient || !recipient.clientId.equals(clientId)) {
         throw new Error('Recipient not found or not authorized');
     }
     return recipient;
@@ -36,7 +36,7 @@ export const updateRecipient = async (
     clientId: mongoose.Types.ObjectId
 ) => {
     const recipient = await getRecipientDetails(recipientId, clientId);
-    return careRecipientDataAccess.updateById(recipient._id, data);
+    return careRecipientDataAccess.updateById(recipient._id as string, data);
 };
 
 export const removeRecipient = async (
@@ -44,5 +44,5 @@ export const removeRecipient = async (
     clientId: mongoose.Types.ObjectId
 ) => {
     const recipient = await getRecipientDetails(recipientId, clientId);
-    return careRecipientDataAccess.deleteById(recipient._id);
+    return careRecipientDataAccess.deleteById(recipient._id as string);
 }; 

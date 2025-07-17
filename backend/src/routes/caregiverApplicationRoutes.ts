@@ -6,6 +6,7 @@ import {
     updateApplication,
 } from '../controllers/caregiverApplicationController';
 import { protect, authorize } from '../middlewares/authMiddleware';
+import { upload } from '../middlewares/uploadMiddleware';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.use(protect);
 
 // Routes for a specific user's application
 router.route('/')
-    .post(authorize('caregiver'), createApplication);
+    .post(authorize('caregiver'), upload.single('resume'), createApplication);
 
 router.route('/my-application')
     .get(authorize('caregiver'), getMyApplication);

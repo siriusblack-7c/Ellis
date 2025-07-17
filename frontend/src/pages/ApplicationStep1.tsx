@@ -54,7 +54,7 @@ export default function ApplicationStep1() {
   }, [user]);
 
   const mutation = useMutation({
-    mutationFn: createCaregiverApplication,
+    mutationFn: (data: FormData) => createCaregiverApplication(data),
     onSuccess: () => {
       toast({
         title: "Application Submitted!",
@@ -74,7 +74,7 @@ export default function ApplicationStep1() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const requiredFields: (keyof typeof formData)[] = [
+    const requiredFields: (keyof Omit<typeof formData, 'cv' | 'phone'>)[] = [
       "country", "firstName", "lastName", "address1", "city", "state",
       "email", "preferredLocation", "weekends", "nights", "coverLetter"
     ];
@@ -83,27 +83,50 @@ export default function ApplicationStep1() {
       if (!formData[field]) {
         toast({
           title: "Missing Information",
-          description: `Please fill in the ${field} field.`,
+          description: `Please fill in the ${field.replace(/([A-Z])/g, ' $1')} field.`,
           variant: "destructive",
         });
         return;
       }
     }
 
-    const applicationData = {
-      preferredWorkLocation: formData.preferredLocation,
-      coverLetter: formData.coverLetter,
-      availability: {
-        weekends: formData.weekends === 'yes',
-        nights: formData.nights === 'yes',
-      }
-    };
+    if (!formData.cv) {
+      toast({
+        title: "Missing Resume",
+        description: "Please upload your resume.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const applicationData = new FormData();
+    applicationData.append('preferredWorkLocation', formData.preferredLocation);
+    applicationData.append('coverLetter', formData.coverLetter);
+    applicationData.append('availability[weekends]', formData.weekends);
+    applicationData.append('availability[nights]', formData.nights);
+    applicationData.append('resume', formData.cv);
+
+    // Append other user-related data if needed by the backend
+    applicationData.append('country', formData.country);
+    applicationData.append('firstName', formData.firstName);
+    applicationData.append('lastName', formData.lastName);
+    applicationData.append('address1', formData.address1);
+    applicationData.append('city', formData.city);
+    applicationData.append('state', formData.state);
+    applicationData.append('email', formData.email);
+    applicationData.append('phone', formData.phone);
 
     mutation.mutate(applicationData);
   };
 
-  const handleInputChange = (field: string, value: string | File) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileChange = (file: File | null) => {
+    if (file) {
+      setFormData(prev => ({ ...prev, cv: file }));
+    }
   };
 
   return (
@@ -208,19 +231,21 @@ export default function ApplicationStep1() {
 
                 <div className="space-y-2">
                   <Label htmlFor="resume">Upload Resume</Label>
-                  <div className="border-2 border-dashed border-input rounded-lg p-6 text-center">
-                    <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-sm text-muted-foreground mb-2">Click to upload or drag and drop</p>
-                    <p className="text-xs text-muted-foreground">PDF, DOC, DOCX (max 5MB)</p>
-                    <Input
-                      type="file"
-                      className="hidden"
-                      id="resume"
-                      accept=".pdf,.doc,.docx"
-                      onChange={(e) => handleInputChange('cv', e.target.files ? e.target.files[0] : "")}
-                    />
-                  </div>
-                  {formData.cv && <p className="text-sm text-muted-foreground">Selected file: {formData.cv.name}</p>}
+                  <Label htmlFor="resume" className="w-full">
+                    <div className="border-2 border-dashed border-input rounded-lg p-6 text-center cursor-pointer">
+                      <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-sm text-muted-foreground mb-2">Click to upload or drag and drop</p>
+                      <p className="text-xs text-muted-foreground">PDF, DOC, DOCX (max 5MB)</p>
+                      <Input
+                        type="file"
+                        className="hidden"
+                        id="resume"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => handleFileChange(e.target.files ? e.target.files[0] : null)}
+                      />
+                    </div>
+                  </Label>
+                  {formData.cv && <p className="text-sm text-muted-foreground mt-2">Selected file: {formData.cv.name}</p>}
                 </div>
 
                 <Button type="submit" className="w-full" disabled={mutation.isPending}>
