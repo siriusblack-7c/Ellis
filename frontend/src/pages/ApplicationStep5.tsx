@@ -7,26 +7,51 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Star, Briefcase, Clock, MapPin, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getMyApplication, updateCaregiverApplication } from "@/api/caregiverApplicationApi";
+import { CaregiverApplication } from "@/types/caregiverApplication";
+import { useAuth } from "@/hooks/useAuth";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function ApplicationStep5() {
     const navigate = useNavigate();
     const { toast } = useToast();
-    const [careerPath, setCareerPath] = useState<string | null>(null);
+    const queryClient = useQueryClient();
+    const { user } = useAuth();
+
+    const { data: application, isLoading } = useQuery<CaregiverApplication>({
+        queryKey: ['myApplication'],
+        queryFn: getMyApplication,
+        enabled: !!user,
+    });
+
+    const mutation = useMutation({
+        mutationFn: (data: Partial<CaregiverApplication>) => updateCaregiverApplication(application!._id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['myApplication'] });
+            toast({
+                title: "Career Path Confirmed!",
+                description: "Congratulations! Your Ellis Care Global career journey begins now.",
+            });
+
+            setTimeout(() => {
+                navigate('/');
+            }, 3000);
+        },
+        onError: () => {
+            toast({
+                title: "Error",
+                description: "Failed to select career path.",
+                variant: "destructive",
+            });
+        },
+    });
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
 
     const handleSelectCareer = (pathId: string) => {
-        setCareerPath(pathId);
-        toast({
-            title: "Career Path Confirmed!",
-            description: "Congratulations! Your Ellis Care Global career journey begins now.",
-        });
-
-        setTimeout(() => {
-            navigate('/');
-        }, 3000);
+        mutation.mutate({ careerPathSelection: pathId });
     };
 
     const careerOptions = [
@@ -67,6 +92,12 @@ export default function ApplicationStep5() {
             recommended: false
         }
     ];
+
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
+
+    const isSubmitted = application?.currentStage !== 'hired' || application?.stageStatus === 'pending_review';
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -111,7 +142,7 @@ export default function ApplicationStep5() {
                         {careerOptions.map((option) => {
                             const IconComponent = option.icon;
                             return (
-                                <Card key={option.id} className={`relative ${careerPath === option.id ? 'ring-2 ring-primary' : ''}`}>
+                                <Card key={option.id} className={`relative ${application?.careerPathSelection === option.id ? 'ring-2 ring-primary' : ''}`}>
                                     <CardHeader>
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center gap-3">
@@ -156,18 +187,20 @@ export default function ApplicationStep5() {
                                             </ul>
                                         </div>
 
-                                        {careerPath === option.id ? (
+                                        {isSubmitted && application?.careerPathSelection === option.id && (
                                             <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
                                                 <Trophy className="h-6 w-6 text-green-600 mx-auto mb-1" />
                                                 <p className="font-medium text-green-900 dark:text-green-100 text-sm">Career Path Selected!</p>
                                             </div>
-                                        ) : (
+                                        )}
+                                        {!isSubmitted && (
                                             <Button
                                                 onClick={() => handleSelectCareer(option.id)}
                                                 className="w-full"
                                                 variant={option.recommended ? "default" : "outline"}
+                                                disabled={mutation.isPending}
                                             >
-                                                Choose This Path
+                                                {mutation.isPending ? 'Selecting...' : 'Choose This Path'}
                                             </Button>
                                         )}
                                     </CardContent>

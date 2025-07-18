@@ -25,7 +25,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
-import { CaregiverApplication, ApplicationStage } from "@/types/caregiverApplication";
+import { CaregiverApplication } from "@/types/caregiverApplication";
 import { User } from "@/types/user";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAdminApplications, updateAdminApplicationStatus, getAdminUsers } from "@/api/adminApi";
@@ -45,7 +45,6 @@ export function ApplicationsTab() {
     const { toast } = useToast();
     const [selectedApplications, setSelectedApplications] = useState<string[]>([]);
     const [filterStatus, setFilterStatus] = useState("all");
-    const [filterStage, setFilterStage] = useState<ApplicationStage | 'all'>('all');
     const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
     const [selectedApplicationForDetails, setSelectedApplicationForDetails] = useState<CaregiverApplication | null>(null);
     const [filterLocation, setFilterLocation] = useState("");
@@ -65,8 +64,8 @@ export function ApplicationsTab() {
     });
 
     const statusMutation = useMutation({
-        mutationFn: ({ applicationId, action }: { applicationId: string; action: 'approve' | 'reject' }) =>
-            updateAdminApplicationStatus(applicationId, action),
+        mutationFn: ({ applicationId, status }: { applicationId: string; status: string }) =>
+            updateAdminApplicationStatus(applicationId, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['adminApplications'] });
             toast({
@@ -101,7 +100,7 @@ export function ApplicationsTab() {
                 setIsDetailsDialogOpen(true);
             }
         } else {
-            statusMutation.mutate({ applicationId, action: action as 'approve' | 'reject' });
+            statusMutation.mutate({ applicationId, status: action });
         }
     };
 
@@ -130,14 +129,13 @@ export function ApplicationsTab() {
     const filteredApplications = applications
         .filter(
             (app) => {
-                const statusMatch = filterStatus === "all" || app.stageStatus === filterStatus;
-                const stageMatch = filterStage === 'all' || app.currentStage === filterStage;
+                const statusMatch = filterStatus === "all" || app.status === filterStatus;
                 const locationMatch = !filterLocation || (app.preferredWorkLocation && app.preferredWorkLocation.toLowerCase().includes(filterLocation.toLowerCase()));
                 const dateMatch = !filterDate || !filterDate.from || (
                     new Date(app.createdAt) >= filterDate.from &&
                     (!filterDate.to || new Date(app.createdAt) <= filterDate.to)
                 );
-                return statusMatch && stageMatch && locationMatch && dateMatch;
+                return statusMatch && locationMatch && dateMatch;
             }
         )
         .sort((a, b) => {
@@ -147,14 +145,10 @@ export function ApplicationsTab() {
                     return isAsc
                         ? getApplicantName(a.userId).localeCompare(getApplicantName(b.userId))
                         : getApplicantName(b.userId).localeCompare(getApplicantName(a.userId));
-                case 'stage':
-                    return isAsc
-                        ? a.currentStage.localeCompare(b.currentStage)
-                        : b.currentStage.localeCompare(a.currentStage);
                 case 'status':
                     return isAsc
-                        ? a.stageStatus.localeCompare(b.stageStatus)
-                        : b.stageStatus.localeCompare(a.stageStatus);
+                        ? a.status.localeCompare(b.status)
+                        : b.status.localeCompare(a.status);
                 case 'createdAt':
                     return isAsc
                         ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -183,22 +177,8 @@ export function ApplicationsTab() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Statuses</SelectItem>
-                            <SelectItem value="not_submitted">Not Submitted</SelectItem>
-                            <SelectItem value="pending_review">Pending Review</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
-                            <SelectItem value="approved">Approved</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Select value={filterStage} onValueChange={(value) => setFilterStage(value as ApplicationStage | 'all')}>
-                        <SelectTrigger className="w-48">
-                            <SelectValue placeholder="Filter by stage" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Stages</SelectItem>
-                            <SelectItem value="application">Application</SelectItem>
-                            <SelectItem value="interview">Interview</SelectItem>
-                            <SelectItem value="training">Training</SelectItem>
-                            <SelectItem value="internship">Internship</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="under_review">Under Review</SelectItem>
                             <SelectItem value="hired">Hired</SelectItem>
                             <SelectItem value="rejected">Rejected</SelectItem>
                         </SelectContent>
@@ -299,12 +279,6 @@ export function ApplicationsTab() {
                             </Button>
                         </TableHead>
                         <TableHead>
-                            <Button variant="ghost" onClick={() => handleSort('stage')}>
-                                Stage
-                                {sortBy === 'stage' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
-                            </Button>
-                        </TableHead>
-                        <TableHead>
                             <Button variant="ghost" onClick={() => handleSort('status')}>
                                 Status
                                 {sortBy === 'status' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
@@ -331,20 +305,17 @@ export function ApplicationsTab() {
                                 />
                             </TableCell>
                             <TableCell>{getApplicantName(app.userId)}</TableCell>
-                            <TableCell>{app.currentStage}</TableCell>
                             <TableCell>
                                 <Badge
                                     variant={
-                                        app.stageStatus === "pending_review"
-                                            ? "secondary"
-                                            : app.stageStatus === "rejected"
-                                                ? "destructive"
-                                                : app.stageStatus === "approved"
-                                                    ? "default"
-                                                    : "outline"
+                                        app.status === "hired"
+                                            ? "default"
+                                            : app.status === "pending"
+                                                ? "secondary"
+                                                : "destructive"
                                     }
                                 >
-                                    {app.stageStatus.replace('_', ' ')}
+                                    {app.status}
                                 </Badge>
                             </TableCell>
                             <TableCell>
@@ -360,16 +331,15 @@ export function ApplicationsTab() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent>
                                         <DropdownMenuItem onClick={() => handleApplicationAction(app._id, 'view')}>View Application</DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => handleApplicationAction(app._id, 'approve')}
-                                            disabled={app.stageStatus !== 'pending_review'}
-                                        >
-                                            Approve
+                                        <DropdownMenuItem onClick={() => handleApplicationAction(app._id, 'under_review')}>
+                                            Mark as Under Review
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleApplicationAction(app._id, 'hired')}>
+                                            Hire
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
-                                            onClick={() => handleApplicationAction(app._id, 'reject')}
+                                            onClick={() => handleApplicationAction(app._id, 'rejected')}
                                             className="text-red-600"
-                                            disabled={app.stageStatus !== 'pending_review'}
                                         >
                                             Reject
                                         </DropdownMenuItem>
@@ -396,11 +366,8 @@ export function ApplicationsTab() {
                                 <div>
                                     <h3 className="font-semibold text-lg mb-2">Application Information</h3>
                                     <div className="grid grid-cols-3 gap-x-4 gap-y-2">
-                                        <Label className="text-right font-semibold">Stage:</Label>
-                                        <span className="col-span-2">{selectedApplicationForDetails.currentStage}</span>
-
                                         <Label className="text-right font-semibold">Status:</Label>
-                                        <span className="col-span-2">{selectedApplicationForDetails.stageStatus}</span>
+                                        <span className="col-span-2">{selectedApplicationForDetails.status}</span>
 
                                         <Label className="text-right font-semibold">Applied On:</Label>
                                         <span className="col-span-2">{new Date(selectedApplicationForDetails.createdAt).toLocaleDateString()}</span>

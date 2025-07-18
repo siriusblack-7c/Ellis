@@ -39,7 +39,7 @@ export const useAdmin = () => {
         }
     };
     const applicationStatusMutation = useMutation({
-        mutationFn: ({ id, status }: { id: string, status: string }) => updateAdminApplicationStatus(id, status),
+        mutationFn: ({ id, status }: { id: string, status: 'approve' | 'reject' }) => updateAdminApplicationStatus(id, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['applications'] });
             toast({

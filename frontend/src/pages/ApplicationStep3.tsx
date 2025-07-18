@@ -6,27 +6,57 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, DollarSign, FileCheck, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getMyApplication, updateCaregiverApplication } from "@/api/caregiverApplicationApi";
+import { CaregiverApplication } from "@/types/caregiverApplication";
+import { useAuth } from "@/hooks/useAuth";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function ApplicationStep3() {
     const navigate = useNavigate();
     const { toast } = useToast();
-    const [hasAccepted, setHasAccepted] = useState(false);
+    const queryClient = useQueryClient();
+    const { user } = useAuth();
+
+    const { data: application, isLoading } = useQuery<CaregiverApplication>({
+        queryKey: ['myApplication'],
+        queryFn: getMyApplication,
+        enabled: !!user,
+    });
+
+    const mutation = useMutation({
+        mutationFn: (data: Partial<CaregiverApplication>) => updateCaregiverApplication(application!._id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['myApplication'] });
+            toast({
+                title: "Training Accepted!",
+                description: "Your sponsored training has been confirmed. You'll receive enrollment details within 48 hours.",
+            });
+
+            setTimeout(() => {
+                navigate('/application/step-4');
+            }, 2000);
+        },
+        onError: () => {
+            toast({
+                title: "Error",
+                description: "Failed to accept training agreement.",
+                variant: "destructive",
+            });
+        },
+    });
+
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
 
     const handleAcceptTraining = () => {
-        setHasAccepted(true);
-        toast({
-            title: "Training Accepted!",
-            description: "Your sponsored training has been confirmed. You'll receive enrollment details within 48 hours.",
-        });
-
-        setTimeout(() => {
-            navigate('/application/step-4');
-        }, 2000);
+        mutation.mutate({ trainingAgreementAccepted: true });
     };
+
+    if (isLoading) {
+        return <div>Loading...</div>
+    }
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -136,8 +166,8 @@ export default function ApplicationStep3() {
                                     </ul>
                                 </div>
 
-                                {!hasAccepted ? (
-                                    <Button onClick={handleAcceptTraining} className="w-full">
+                                {application && !application.trainingAgreementAccepted ? (
+                                    <Button onClick={handleAcceptTraining} className="w-full" disabled={mutation.isPending}>
                                         Accept Training Agreement
                                     </Button>
                                 ) : (

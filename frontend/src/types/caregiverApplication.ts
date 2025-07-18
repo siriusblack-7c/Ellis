@@ -1,17 +1,19 @@
-export type ApplicationStatus =
-    | 'pending'
-    | 'under_review'
+export type ApplicationStage =
+    | 'application'
     | 'interview'
     | 'training'
     | 'internship'
     | 'hired'
-    | 'rejected';
+    | 'rejected'
+    | 'approved';
+
+export type StageStatus = 'not_submitted' | 'pending_review' | 'rejected' | 'approved';
 
 export interface CaregiverApplication {
     _id: string;
     userId: string;
-    status: ApplicationStatus;
-    applicationStep: number;
+    currentStage: ApplicationStage;
+    stageStatus: StageStatus;
     yearsExperience?: number;
     preferredWorkLocation: string;
     availability: {
@@ -27,4 +29,7 @@ export interface CaregiverApplication {
     adminNotes?: string;
     createdAt: string;
     updatedAt: string;
+    trainingAgreementAccepted?: boolean;
+    internshipSelection?: string;
+    careerPathSelection?: string;
 } 

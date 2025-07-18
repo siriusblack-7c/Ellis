@@ -1,18 +1,20 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type ApplicationStatus =
-    | 'pending'
-    | 'under_review'
+export type ApplicationStage =
+    | 'application'
     | 'interview'
     | 'training'
     | 'internship'
     | 'hired'
-    | 'rejected';
+    | 'rejected'
+    | 'approved';
+
+export type StageStatus = 'not_submitted' | 'pending_review' | 'rejected' | 'approved';
 
 export interface ICaregiverApplication extends Document {
     userId: mongoose.Types.ObjectId;
-    status: ApplicationStatus;
-    applicationStep: number;
+    currentStage: ApplicationStage;
+    stageStatus: StageStatus;
     yearsExperience: number;
     preferredWorkLocation: string;
     availability: {
@@ -26,6 +28,9 @@ export interface ICaregiverApplication extends Document {
     certificationFilesUrls?: string[];
     videoInterviewUrl?: string;
     adminNotes?: string;
+    trainingAgreementAccepted?: boolean;
+    internshipSelection?: string;
+    careerPathSelection?: string;
 }
 
 const CaregiverApplicationSchema: Schema = new Schema(
@@ -35,18 +40,20 @@ const CaregiverApplicationSchema: Schema = new Schema(
             ref: 'User',
             required: true,
         },
-        status: {
+        currentStage: {
             type: String,
             enum: [
-                'pending', 'under_review', 'interview', 'training',
-                'internship', 'hired', 'rejected'
+                'application', 'interview', 'training',
+                'internship', 'hired', 'rejected', 'approved'
             ],
             required: true,
-            default: 'pending',
+            default: 'application',
         },
-        applicationStep: {
-            type: Number,
-            default: 1,
+        stageStatus: {
+            type: String,
+            enum: ['not_submitted', 'pending_review', 'rejected', 'approved'],
+            required: true,
+            default: 'not_submitted',
         },
         availability: {
             weekends: { type: Boolean, default: false },
@@ -54,7 +61,7 @@ const CaregiverApplicationSchema: Schema = new Schema(
         },
         yearsExperience: {
             type: Number,
-            required: false, // Changed to false, as it's not in step 1
+            required: false,
         },
         preferredWorkLocation: {
             type: String,
@@ -79,6 +86,16 @@ const CaregiverApplicationSchema: Schema = new Schema(
             type: String,
         },
         adminNotes: {
+            type: String,
+        },
+        trainingAgreementAccepted: {
+            type: Boolean,
+            default: false,
+        },
+        internshipSelection: {
+            type: String,
+        },
+        careerPathSelection: {
             type: String,
         },
     },

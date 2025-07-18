@@ -37,7 +37,7 @@ export default function ApplicationStep1() {
     weekends: "",
     nights: "",
     coverLetter: "",
-    cv: null as File | null,
+    resume: null as File | null,
   });
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function ApplicationStep1() {
         title: "Application Submitted!",
         description: "Your application has been received. We'll review it and contact you soon.",
       });
-      navigate('/application/step-2');
+      navigate('/caregiver-dashboard');
     },
     onError: (error: any) => {
       toast({
@@ -90,7 +90,7 @@ export default function ApplicationStep1() {
       }
     }
 
-    if (!formData.cv) {
+    if (!formData.resume) {
       toast({
         title: "Missing Resume",
         description: "Please upload your resume.",
@@ -104,7 +104,7 @@ export default function ApplicationStep1() {
     applicationData.append('coverLetter', formData.coverLetter);
     applicationData.append('availability[weekends]', formData.weekends);
     applicationData.append('availability[nights]', formData.nights);
-    applicationData.append('resume', formData.cv);
+    applicationData.append('resume', formData.resume);
 
     // Append other user-related data if needed by the backend
     applicationData.append('country', formData.country);
@@ -125,7 +125,7 @@ export default function ApplicationStep1() {
 
   const handleFileChange = (file: File | null) => {
     if (file) {
-      setFormData(prev => ({ ...prev, cv: file }));
+      setFormData(prev => ({ ...prev, resume: file }));
     }
   };
 
@@ -245,7 +245,7 @@ export default function ApplicationStep1() {
                       />
                     </div>
                   </Label>
-                  {formData.cv && <p className="text-sm text-muted-foreground mt-2">Selected file: {formData.cv.name}</p>}
+                  {formData.resume && <p className="text-sm text-muted-foreground mt-2">Selected file: {formData.resume.name}</p>}
                 </div>
 
                 <Button type="submit" className="w-full" disabled={mutation.isPending}>

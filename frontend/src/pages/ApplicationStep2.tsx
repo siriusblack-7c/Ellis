@@ -6,39 +6,47 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Video, CheckCircle, Clock, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getMyApplication, updateCaregiverApplication } from "@/api/caregiverApplicationApi";
+import { CaregiverApplication } from "@/types/caregiverApplication";
+import { useAuth } from "@/hooks/useAuth";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function ApplicationStep2() {
     const navigate = useNavigate();
     const { toast } = useToast();
-    const [isRecording, setIsRecording] = useState(false);
-    const [hasRecorded, setHasRecorded] = useState(false);
+    const queryClient = useQueryClient();
+    const { user } = useAuth();
+
+    const { data: application, isLoading } = useQuery<CaregiverApplication>({
+        queryKey: ['myApplication'],
+        queryFn: getMyApplication,
+        enabled: !!user,
+    });
+
+    const mutation = useMutation({
+        mutationFn: (data: Partial<CaregiverApplication>) => updateCaregiverApplication(application!._id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['myApplication'] });
+            toast({
+                title: "Video Submitted!",
+                description: "Your video interview has been submitted for review. We'll contact you within 5-7 business days.",
+            });
+        },
+        onError: () => {
+            toast({
+                title: "Error",
+                description: "Failed to submit video interview.",
+                variant: "destructive",
+            });
+        },
+    });
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
 
-    const handleStartRecording = () => {
-        setIsRecording(true);
-        // Simulate recording process
-        setTimeout(() => {
-            setIsRecording(false);
-            setHasRecorded(true);
-            toast({
-                title: "Recording Complete!",
-                description: "Your video interview has been recorded successfully.",
-            });
-        }, 3000);
-    };
-
     const handleSubmitVideo = () => {
-        toast({
-            title: "Video Submitted!",
-            description: "Your video interview has been submitted for review. We'll contact you within 5-7 business days.",
-        });
-
-        setTimeout(() => {
-            navigate('/application/step-3');
-        }, 2000);
+        mutation.mutate({ videoInterviewUrl: "some-url" });
     };
 
     const questions = [
@@ -48,6 +56,12 @@ export default function ApplicationStep2() {
         "What motivates you to work with Ellis Care Global?",
         "Describe a time when you showed compassion and empathy."
     ];
+
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
+
+    const isSubmitted = application?.videoInterviewUrl || application?.currentStage !== 'interview';
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -77,36 +91,20 @@ export default function ApplicationStep2() {
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center min-h-64 flex flex-col items-center justify-center">
-                                    {!isRecording && !hasRecorded && (
+                                    {!isSubmitted && (
                                         <>
                                             <Video className="h-16 w-16 text-muted-foreground mb-4" />
                                             <p className="text-muted-foreground mb-4">Click the button below to start recording</p>
-                                            <Button onClick={handleStartRecording}>Start Recording</Button>
+                                            <Button onClick={handleSubmitVideo} disabled={mutation.isPending}>
+                                                {mutation.isPending ? 'Submitting...' : 'Submit Video Interview'}
+                                            </Button>
                                         </>
                                     )}
-
-                                    {isRecording && (
-                                        <>
-                                            <div className="animate-pulse">
-                                                <div className="bg-red-500 rounded-full w-4 h-4 mb-4"></div>
-                                            </div>
-                                            <p className="text-red-600 font-medium">Recording in progress...</p>
-                                            <p className="text-sm text-muted-foreground mt-2">Please answer the questions clearly</p>
-                                        </>
-                                    )}
-
-                                    {hasRecorded && (
+                                    {isSubmitted && (
                                         <>
                                             <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
-                                            <p className="text-green-600 font-medium mb-4">Video recorded successfully!</p>
-                                            <div className="space-y-2">
-                                                <Button onClick={handleSubmitVideo} className="w-full">
-                                                    Submit Video Interview
-                                                </Button>
-                                                <Button variant="outline" onClick={() => setHasRecorded(false)} className="w-full">
-                                                    Record Again
-                                                </Button>
-                                            </div>
+                                            <p className="text-green-600 font-medium mb-4">Video submitted successfully!</p>
+                                            <p className="text-sm text-muted-foreground">We'll review it and get back to you soon.</p>
                                         </>
                                     )}
                                 </div>

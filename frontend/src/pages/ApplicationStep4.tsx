@@ -7,26 +7,51 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Building2, Star, Clock, MapPin, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getMyApplication, updateCaregiverApplication } from "@/api/caregiverApplicationApi";
+import { CaregiverApplication } from "@/types/caregiverApplication";
+import { useAuth } from "@/hooks/useAuth";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function ApplicationStep4() {
     const navigate = useNavigate();
     const { toast } = useToast();
-    const [selectedInternship, setSelectedInternship] = useState<string | null>(null);
+    const queryClient = useQueryClient();
+    const { user } = useAuth();
+
+    const { data: application, isLoading } = useQuery<CaregiverApplication>({
+        queryKey: ['myApplication'],
+        queryFn: getMyApplication,
+        enabled: !!user,
+    });
+
+    const mutation = useMutation({
+        mutationFn: (data: Partial<CaregiverApplication>) => updateCaregiverApplication(application!._id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['myApplication'] });
+            toast({
+                title: "Internship Selected!",
+                description: "Your internship placement has been confirmed. You'll receive details within 24 hours.",
+            });
+
+            setTimeout(() => {
+                navigate('/application/step-5');
+            }, 2000);
+        },
+        onError: () => {
+            toast({
+                title: "Error",
+                description: "Failed to select internship.",
+                variant: "destructive",
+            });
+        },
+    });
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
 
     const handleSelectInternship = (internshipId: string) => {
-        setSelectedInternship(internshipId);
-        toast({
-            title: "Internship Selected!",
-            description: "Your internship placement has been confirmed. You'll receive details within 24 hours.",
-        });
-
-        setTimeout(() => {
-            navigate('/application/step-5');
-        }, 2000);
+        mutation.mutate({ internshipSelection: internshipId });
     };
 
     const internships = [
@@ -68,6 +93,12 @@ export default function ApplicationStep4() {
         }
     ];
 
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
+
+    const isSubmitted = application?.currentStage !== 'internship' || application?.stageStatus === 'pending_review';
+
     return (
         <div className="min-h-screen flex flex-col">
             <Navbar />
@@ -85,7 +116,7 @@ export default function ApplicationStep4() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                         {internships.map((internship) => (
-                            <Card key={internship.id} className={`relative ${selectedInternship === internship.id ? 'ring-2 ring-primary' : ''}`}>
+                            <Card key={internship.id} className={`relative ${application?.internshipSelection === internship.id ? 'ring-2 ring-primary' : ''}`}>
                                 <CardHeader>
                                     <div className="flex items-start justify-between">
                                         <div>
@@ -134,18 +165,20 @@ export default function ApplicationStep4() {
                                         </ul>
                                     </div>
 
-                                    {selectedInternship === internship.id ? (
+                                    {isSubmitted && application?.internshipSelection === internship.id && (
                                         <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
                                             <Star className="h-6 w-6 text-green-600 mx-auto mb-1" />
                                             <p className="font-medium text-green-900 dark:text-green-100 text-sm">Selected!</p>
                                         </div>
-                                    ) : (
+                                    )}
+                                    {!isSubmitted && (
                                         <Button
                                             onClick={() => handleSelectInternship(internship.id)}
                                             className="w-full"
                                             variant={internship.isEllis ? "default" : "outline"}
+                                            disabled={mutation.isPending}
                                         >
-                                            Select This Internship
+                                            {mutation.isPending ? 'Selecting...' : 'Select This Internship'}
                                         </Button>
                                     )}
                                 </CardContent>

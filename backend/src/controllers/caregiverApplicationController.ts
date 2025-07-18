@@ -74,10 +74,10 @@ export const getApplicationById = async (req: IRequest, res: Response) => {
 
 export const changeApplicationStatus = async (req: IRequest, res: Response) => {
     try {
-        const { status } = req.body;
-        const application = await applicationService.updateApplicationStatus(
+        const { action } = req.body;
+        const application = await applicationService.updateApplicationStageStatus(
             req.params.id,
-            status,
+            action,
             req.user!
         );
         res.status(200).json(application);

@@ -22,8 +22,8 @@ export const getAdminApplications = async (): Promise<CaregiverApplication[]> =>
     return response.data;
 };
 
-export const updateAdminApplicationStatus = async (applicationId: string, status: string): Promise<CaregiverApplication> => {
-    const response = await axios.put(`/admin/applications/${applicationId}/status`, { status });
+export const updateAdminApplicationStatus = async (applicationId: string, action: 'approve' | 'reject'): Promise<CaregiverApplication> => {
+    const response = await axios.put(`/admin/applications/${applicationId}/status`, { action });
     return response.data;
 };
 
