@@ -41,6 +41,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { sendMessage } from "@/api/messageApi";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 
 export function ApplicationsTab() {
@@ -424,7 +425,18 @@ export function ApplicationsTab() {
                                         }
                                     />
                                 </TableCell>
-                                <TableCell>{getApplicantName(app.userId)}</TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        <Avatar>
+                                            <AvatarImage src={`${import.meta.env.VITE_API_BASE_URL}${getApplicantDetails(app.userId)?.avatar}`} />
+                                            <AvatarFallback>{getApplicantDetails(app.userId)?.firstName.charAt(0)}{getApplicantDetails(app.userId)?.lastName.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex flex-col">
+                                            <div className="font-medium">{getApplicantName(app.userId)}</div>
+                                            <div className="text-sm text-muted-foreground">{getApplicantDetails(app.userId)?.email}</div>
+                                        </div>
+                                    </div>
+                                </TableCell>
                                 <TableCell>{app.currentStage}</TableCell>
                                 <TableCell>
                                     <Badge

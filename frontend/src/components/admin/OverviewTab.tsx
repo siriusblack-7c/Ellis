@@ -160,7 +160,7 @@ export function OverviewTab() {
                 {recentUsers.map(user => (
                   <div key={user._id} className="flex items-center gap-4">
                     <Avatar>
-                      <AvatarImage src={user.avatar} />
+                      <AvatarImage src={`${import.meta.env.VITE_API_BASE_URL}${user.avatar}`} />
                       <AvatarFallback>{user.firstName.charAt(0)}{user.lastName.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
@@ -182,7 +182,7 @@ export function OverviewTab() {
                 {recentApplications.map(app => (
                   <div key={app._id} className="flex items-center gap-4">
                     <Avatar>
-                      <AvatarImage src={users.find(u => u._id === app.userId)?.avatar} />
+                      <AvatarImage src={`${import.meta.env.VITE_API_BASE_URL}${users.find(u => u._id === app.userId)?.avatar}`} />
                       <AvatarFallback>{getApplicantName(app.userId).charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>

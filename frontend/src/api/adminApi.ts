@@ -1,6 +1,7 @@
 import axios from '@/lib/axios';
 import { User } from '@/types/user';
 import { CaregiverApplication } from '@/types/caregiverApplication';
+import { CareRecipient } from '@/types/recipient';
 
 export const getAdminUsers = async (): Promise<User[]> => {
     const response = await axios.get('/admin/users');
@@ -19,6 +20,11 @@ export const addAdminUserTag = async (userId: string, tag: string): Promise<User
 
 export const getAdminApplications = async (): Promise<CaregiverApplication[]> => {
     const response = await axios.get('/admin/applications');
+    return response.data;
+};
+
+export const getClientApplications = async (): Promise<CareRecipient[]> => {
+    const response = await axios.get('/recipients/client-applications');
     return response.data;
 };
 

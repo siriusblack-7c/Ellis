@@ -1,3 +1,5 @@
+import { User } from './user';
+
 export type CareNeed =
     | 'personalCare'
     | 'companionship'
@@ -13,7 +15,7 @@ export type CareNeed =
 
 export interface CareRecipient {
     _id: string;
-    clientId: string;
+    clientId: User;
     name: string;
     age: number;
     careNeeds: CareNeed[];

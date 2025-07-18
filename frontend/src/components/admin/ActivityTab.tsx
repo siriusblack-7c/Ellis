@@ -42,7 +42,7 @@ export function ActivityTab() {
             .map(app => ({
                 id: `app-update-${app._id}`,
                 userId: app.userId,
-                action: `application status changed to ${app.status}.`,
+                action: `application status changed to ${app.stageStatus}.`,
                 timestamp: new Date(app.updatedAt),
             })),
     ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -79,7 +79,7 @@ export function ActivityTab() {
                             return (
                                 <div key={activity.id} className="flex items-start gap-4">
                                     <Avatar>
-                                        <AvatarImage src={user?.avatar} />
+                                        <AvatarImage src={`${import.meta.env.VITE_API_BASE_URL}${user?.avatar}`} />
                                         <AvatarFallback>
                                             {user?.firstName.charAt(0)}
                                             {user?.lastName.charAt(0)}

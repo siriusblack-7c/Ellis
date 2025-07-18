@@ -8,6 +8,7 @@ import { DashboardStats } from "@/components/admin/DashboardStats";
 import { OverviewTab } from "@/components/admin/OverviewTab";
 import { UserManagementTab } from "@/components/admin/UserManagementTab";
 import { ApplicationsTab } from "@/components/admin/ApplicationsTab";
+import { ClientApplicationsTab } from "@/components/admin/ClientApplicationsTab";
 import { ActivityTab } from "@/components/admin/ActivityTab";
 import { GalleryTab } from "@/components/admin/GalleryTab";
 import { useGallery } from "@/contexts/GalleryContext";
@@ -53,7 +54,8 @@ export default function AdminDashboard() {
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="users">User Management</TabsTrigger>
-              <TabsTrigger value="applications">Applications</TabsTrigger>
+              <TabsTrigger value="applications">Caregiver Applications</TabsTrigger>
+              <TabsTrigger value="client-applications">Client Applications</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
               {/* <TabsTrigger value="gallery">Gallery</TabsTrigger> */}
             </TabsList>
@@ -67,6 +69,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="applications">
               <ApplicationsTab />
+            </TabsContent>
+
+            <TabsContent value="client-applications">
+              <ClientApplicationsTab />
             </TabsContent>
 
             <TabsContent value="gallery">

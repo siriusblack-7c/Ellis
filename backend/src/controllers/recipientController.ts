@@ -1,6 +1,15 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import * as recipientService from '../services/recipientService';
 import { IRequest } from '../middlewares/authMiddleware';
+
+export const getClientApplications = async (req: Request, res: Response) => {
+    try {
+        const recipients = await recipientService.getClientApplications();
+        res.status(200).json(recipients);
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 export const createRecipient = async (req: IRequest, res: Response) => {
     try {
@@ -17,7 +26,7 @@ export const createRecipient = async (req: IRequest, res: Response) => {
         const recipient = await recipientService.createRecipient(recipientData);
         res.status(201).json(recipient);
     } catch (error: any) {
-        console.log(error.message, 'Error creating recipient'); 
+        console.log(error.message, 'Error creating recipient');
         res.status(400).json({ message: error.message });
     }
 };

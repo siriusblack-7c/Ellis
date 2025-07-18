@@ -15,6 +15,7 @@ import Papa from 'papaparse';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useAdmin } from "@/hooks/useAdmin";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function UserManagementTab() {
   const { sendMessage } = useAdmin();
@@ -298,11 +299,19 @@ export function UserManagementTab() {
                 />
               </TableCell>
               <TableCell>
+                <div className="flex items-center gap-2">
+                <Avatar>
+                  <AvatarImage src={`${import.meta.env.VITE_API_BASE_URL}${user.avatar}`} />
+                  <AvatarFallback>{user.firstName.charAt(0)}{user.lastName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
                 <div className="font-medium">
                   {user.firstName} {user.lastName}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {user.email}
+                    {user.email}
+                  </div>
+                </div>
                 </div>
               </TableCell>
               <TableCell>
