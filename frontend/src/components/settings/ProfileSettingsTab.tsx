@@ -63,7 +63,7 @@ export const ProfileSettingsTab = () => {
 
     useEffect(() => {
         if (user) {
-            setAvatarPreview(user.avatar ? `http://localhost:5001${user.avatar}` : null);
+            setAvatarPreview(user.avatar ? `${import.meta.env.VITE_API_BASE_URL}${user.avatar}` : null);
             profileForm.reset({
                 firstName: user.firstName,
                 lastName: user.lastName,

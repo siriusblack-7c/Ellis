@@ -42,7 +42,7 @@ export default function ApplicationStep1() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (user) {
+    if (user && user.role === 'caregiver') {
       setFormData(prev => ({
         ...prev,
         firstName: user.firstName || "",
@@ -50,6 +50,10 @@ export default function ApplicationStep1() {
         email: user.email || "",
         phone: user.phoneNumber || "",
       }));
+    } else if (!user) {
+      navigate('/auth');
+    } else {
+      navigate('/');
     }
   }, [user]);
 

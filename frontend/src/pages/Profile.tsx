@@ -123,7 +123,7 @@ export default function Profile() {
               <CardContent className="pt-6">
                 <div className="flex items-center space-x-6">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src={`http://localhost:5001${user.avatar}`} alt="Profile picture" />
+                    <AvatarImage src={`${import.meta.env.VITE_API_BASE_URL}${user.avatar}`} alt="Profile picture" />
                     <AvatarFallback className="text-lg">
                       {user.firstName[0]}{user.lastName[0]}
                     </AvatarFallback>

@@ -39,6 +39,8 @@ import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { sendMessage } from "@/api/messageApi";
 
 
 export function ApplicationsTab() {
@@ -53,6 +55,8 @@ export function ApplicationsTab() {
     const [filterDate, setFilterDate] = useState<DateRange | undefined>(undefined);
     const [sortBy, setSortBy] = useState("createdAt");
     const [sortDirection, setSortDirection] = useState("desc");
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [contactMessage, setContactMessage] = useState("");
 
 
     const { data: applications = [], isLoading: isLoadingApplications } = useQuery<CaregiverApplication[]>({
@@ -164,7 +168,47 @@ export function ApplicationsTab() {
     };
 
     const onContact = () => {
-        console.log("Contacting applicants");
+        if (selectedApplications.length === 0) {
+            toast({
+                title: "No Applications Selected",
+                description: "Please select at least one application to contact.",
+                variant: "destructive",
+            });
+            return;
+        }
+        setIsContactModalOpen(true);
+    };
+
+    const handleSendMessage = async () => {
+        const recipientIds = selectedApplications.map(appId => {
+            const app = applications.find(a => a._id === appId);
+            return app ? app.userId : '';
+        }).filter(id => id !== '');
+
+        if (recipientIds.length === 0) {
+            toast({
+                title: "Error",
+                description: "Could not find users for the selected applications.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            await sendMessage(recipientIds, contactMessage);
+            toast({
+                title: "Message Sent",
+                description: `Message sent to ${recipientIds.length} applicants.`,
+            });
+            setIsContactModalOpen(false);
+            setContactMessage("");
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to send message.",
+                variant: "destructive",
+            });
+        }
     };
 
     const getApplicantName = (userId: string) => {
@@ -332,103 +376,105 @@ export function ApplicationsTab() {
                     </Button>
                 </div>
             </div>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-[40px]">
-                            <Checkbox
-                                checked={isAllSelected}
-                                onCheckedChange={(checked) => handleSelectAllApplications(!!checked)}
-                            />
-                        </TableHead>
-                        <TableHead>
-                            <Button variant="ghost" onClick={() => handleSort('applicant')}>
-                                Applicant
-                                {sortBy === 'applicant' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
-                            </Button>
-                        </TableHead>
-                        <TableHead>
-                            <Button variant="ghost" onClick={() => handleSort('stage')}>
-                                Stage
-                                {sortBy === 'stage' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
-                            </Button>
-                        </TableHead>
-                        <TableHead>
-                            <Button variant="ghost" onClick={() => handleSort('status')}>
-                                Status
-                                {sortBy === 'status' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
-                            </Button>
-                        </TableHead>
-                        <TableHead>
-                            <Button variant="ghost" onClick={() => handleSort('createdAt')}>
-                                Applied On
-                                {sortBy === 'createdAt' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
-                            </Button>
-                        </TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {filteredApplications.map((app) => (
-                        <TableRow key={app._id}>
-                            <TableCell>
+            <div className="border rounded-md">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[40px]">
                                 <Checkbox
-                                    checked={selectedApplications.includes(app._id)}
-                                    onCheckedChange={(checked) =>
-                                        handleSelectApplication(app._id, !!checked)
-                                    }
+                                    checked={isAllSelected}
+                                    onCheckedChange={(checked) => handleSelectAllApplications(!!checked)}
                                 />
-                            </TableCell>
-                            <TableCell>{getApplicantName(app.userId)}</TableCell>
-                            <TableCell>{app.currentStage}</TableCell>
-                            <TableCell>
-                                <Badge
-                                    variant={
-                                        app.stageStatus === "pending_review"
-                                            ? "secondary"
-                                            : app.stageStatus === "rejected"
-                                                ? "destructive"
-                                                : app.stageStatus === "approved"
-                                                    ? "default"
-                                                    : "outline"
-                                    }
-                                >
-                                    {app.stageStatus.replace('_', ' ')}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                {new Date(app.createdAt).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                            <span className="sr-only">Open menu</span>
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuItem onClick={() => handleApplicationAction(app._id, 'view')}>View Application</DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => handleApplicationAction(app._id, 'approve')}
-                                            disabled={app.stageStatus !== 'pending_review'}
-                                        >
-                                            Approve
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => handleApplicationAction(app._id, 'reject')}
-                                            className="text-red-600"
-                                            disabled={app.stageStatus !== 'pending_review'}
-                                        >
-                                            Reject
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
+                            </TableHead>
+                            <TableHead>
+                                <Button variant="ghost" onClick={() => handleSort('applicant')}>
+                                    Applicant
+                                    {sortBy === 'applicant' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
+                                </Button>
+                            </TableHead>
+                            <TableHead>
+                                <Button variant="ghost" onClick={() => handleSort('stage')}>
+                                    Stage
+                                    {sortBy === 'stage' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
+                                </Button>
+                            </TableHead>
+                            <TableHead>
+                                <Button variant="ghost" onClick={() => handleSort('status')}>
+                                    Status
+                                    {sortBy === 'status' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
+                                </Button>
+                            </TableHead>
+                            <TableHead>
+                                <Button variant="ghost" onClick={() => handleSort('createdAt')}>
+                                    Applied On
+                                    {sortBy === 'createdAt' && (sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4 inline-block" /> : <ArrowDown className="ml-2 h-4 w-4 inline-block" />)}
+                                </Button>
+                            </TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredApplications.map((app) => (
+                            <TableRow key={app._id}>
+                                <TableCell>
+                                    <Checkbox
+                                        checked={selectedApplications.includes(app._id)}
+                                        onCheckedChange={(checked) =>
+                                            handleSelectApplication(app._id, !!checked)
+                                        }
+                                    />
+                                </TableCell>
+                                <TableCell>{getApplicantName(app.userId)}</TableCell>
+                                <TableCell>{app.currentStage}</TableCell>
+                                <TableCell>
+                                    <Badge
+                                        variant={
+                                            app.stageStatus === "pending_review"
+                                                ? "secondary"
+                                                : app.stageStatus === "rejected"
+                                                    ? "destructive"
+                                                    : app.stageStatus === "approved"
+                                                        ? "default"
+                                                        : "outline"
+                                        }
+                                    >
+                                        {app.stageStatus.replace('_', ' ')}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    {new Date(app.createdAt).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                <span className="sr-only">Open menu</span>
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem onClick={() => handleApplicationAction(app._id, 'view')}>View Application</DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => handleApplicationAction(app._id, 'approve')}
+                                                disabled={app.stageStatus !== 'pending_review'}
+                                            >
+                                                Approve
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => handleApplicationAction(app._id, 'reject')}
+                                                className="text-red-600"
+                                                disabled={app.stageStatus !== 'pending_review'}
+                                            >
+                                                Reject
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
             {selectedApplicationForDetails && (() => {
                 return (
                     <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
@@ -489,6 +535,33 @@ export function ApplicationsTab() {
                     </Dialog>
                 )
             })()}
+            <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Contact Applicants</DialogTitle>
+                        <DialogDescription>
+                            You are about to send a message to {selectedApplications.length} selected applicant(s).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-4">
+                        <Textarea
+                            placeholder="Type your message here..."
+                            value={contactMessage}
+                            onChange={(e) => setContactMessage(e.target.value)}
+                            rows={5}
+                        />
+                    </div>
+                    <div className="mt-4 flex justify-end gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsContactModalOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSendMessage}>Send Message</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </TabsContent>
     );
 } 

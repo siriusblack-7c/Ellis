@@ -1,5 +1,4 @@
-.
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { messageService } from '../services/messageService';
 import { IRequest } from '../middlewares/authMiddleware';
 
