@@ -115,7 +115,10 @@ export default {
 					'0%': { boxShadow: '0 0 5px rgba(30, 136, 229, 0.5)' },
 					'50%': { boxShadow: '0 0 20px rgba(30, 136, 229, 0.8)' },
 					'100%': { boxShadow: '0 0 5px rgba(30, 136, 229, 0.5)' }
-				}
+				},
+				scroll: {
+					to: { transform: "translateX(-50%)" },
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -128,7 +131,8 @@ export default {
 				'float': 'float 6s ease-in-out infinite',
 				'pulse-slow': 'pulse-slow 4s ease-in-out infinite',
 				'wave': 'wave 12s -2s linear infinite',
-				'button-glow': 'button-glow 3s ease-in-out infinite'
+				'button-glow': 'button-glow 3s ease-in-out infinite',
+				scroll: "scroll 60s linear infinite",
 			}
 		}
 	},

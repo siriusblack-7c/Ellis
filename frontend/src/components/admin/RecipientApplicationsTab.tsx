@@ -64,7 +64,7 @@ export function CaregiverApplicationsTab() {
     });
 
     const statusMutation = useMutation({
-        mutationFn: ({ applicationId, status }: { applicationId: string; status: string }) =>
+        mutationFn: ({ applicationId, status }: { applicationId: string; status: 'approve' | 'reject' }) =>
             updateAdminApplicationStatus(applicationId, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['adminApplications'] });
@@ -100,7 +100,7 @@ export function CaregiverApplicationsTab() {
                 setIsDetailsDialogOpen(true);
             }
         } else {
-            statusMutation.mutate({ applicationId, status: action });
+            statusMutation.mutate({ applicationId, status: action as 'approve' | 'reject' });
         }
     };
 
@@ -129,7 +129,7 @@ export function CaregiverApplicationsTab() {
     const filteredApplications = applications
         .filter(
             (app) => {
-                const statusMatch = filterStatus === "all" || app.status === filterStatus;
+                const statusMatch = filterStatus === "all" || app.stageStatus === filterStatus;
                 const locationMatch = !filterLocation || (app.preferredWorkLocation && app.preferredWorkLocation.toLowerCase().includes(filterLocation.toLowerCase()));
                 const dateMatch = !filterDate || !filterDate.from || (
                     new Date(app.createdAt) >= filterDate.from &&
@@ -147,8 +147,8 @@ export function CaregiverApplicationsTab() {
                         : getApplicantName(b.userId).localeCompare(getApplicantName(a.userId));
                 case 'status':
                     return isAsc
-                        ? a.status.localeCompare(b.status)
-                        : b.status.localeCompare(a.status);
+                        ? a.stageStatus.localeCompare(b.stageStatus)
+                        : b.stageStatus.localeCompare(a.stageStatus);
                 case 'createdAt':
                     return isAsc
                         ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -321,18 +321,18 @@ export function CaregiverApplicationsTab() {
                                     <TableCell>
                                         <Badge
                                             variant={
-                                                application.status === "hired"
+                                                application.stageStatus === "approved"
                                                     ? "default"
-                                                    : application.status === "rejected"
+                                                    : application.stageStatus === "rejected"
                                                         ? "destructive"
                                                         : "outline"
                                             }
                                         >
-                                            {application.status}
+                                            {application.stageStatus}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="font-medium">{user?.phone}</div>
+                                        <div className="font-medium">{user?.phoneNumber}</div>
                                     </TableCell>
                                     <TableCell>{application.preferredWorkLocation || "N/A"}</TableCell>
                                     <TableCell>
@@ -391,8 +391,8 @@ export function CaregiverApplicationsTab() {
                                 <div className="space-y-2">
                                     <p><strong>Applicant Name:</strong> {getApplicantName(selectedApplicationForDetails.userId)}</p>
                                     <p><strong>Email:</strong> {users.find(u => u._id === selectedApplicationForDetails.userId)?.email}</p>
-                                    <p><strong>Phone:</strong> {users.find(u => u._id === selectedApplicationForDetails.userId)?.phone}</p>
-                                    <p><strong>Date of Birth:</strong> {new Date(selectedApplicationForDetails.dateOfBirth).toLocaleDateString()}</p>
+                                    <p><strong>Phone:</strong> {users.find(u => u._id === selectedApplicationForDetails.userId)?.phoneNumber}</p>
+                                    <p><strong>Date of Birth:</strong> {new Date(selectedApplicationForDetails.birthDate).toLocaleDateString()}</p>
                                     <p><strong>Gender:</strong> {selectedApplicationForDetails.gender}</p>
                                     <p><strong>Nationality:</strong> {selectedApplicationForDetails.nationality}</p>
                                     <p><strong>Address:</strong> {`${selectedApplicationForDetails.address.street}, ${selectedApplicationForDetails.address.city}, ${selectedApplicationForDetails.address.state} ${selectedApplicationForDetails.address.zipCode}, ${selectedApplicationForDetails.address.country}`}</p>

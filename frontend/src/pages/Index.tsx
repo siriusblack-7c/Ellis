@@ -11,6 +11,7 @@ import CtaSection from "@/components/home/CtaSection";
 import WhyChooseUsSection from "@/components/home/WhyChooseUsSection";
 import HeroFeatures from "@/components/home/HeroFeatures";
 import ServicesSection from "@/components/home/ServicesSection";
+import { SupportedCountries } from "@/components/home/SupportedCountries";
 
 export default function Index() {
 
@@ -35,6 +36,9 @@ export default function Index() {
 
         {/* How It Works Section */}
         <HowItWorksSection />
+
+        {/* Supported Countries */}
+        <SupportedCountries />
 
         {/* Why Choose Us Section */}
         <WhyChooseUsSection />

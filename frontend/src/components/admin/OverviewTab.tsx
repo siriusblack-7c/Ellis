@@ -187,7 +187,7 @@ export function OverviewTab() {
                     </Avatar>
                     <div>
                       <p className="font-semibold">{getApplicantName(app.userId)}</p>
-                      <p className="text-sm text-muted-foreground">Status: {app.status}</p>
+                      <p className="text-sm text-muted-foreground">Status: {app.stageStatus}</p>
                     </div>
                     <div className="ml-auto text-sm text-muted-foreground">{new Date(app.createdAt).toLocaleDateString()}</div>
                   </div>

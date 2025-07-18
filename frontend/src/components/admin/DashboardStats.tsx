@@ -36,8 +36,8 @@ export function DashboardStats() {
 
     const totalUsers = users.length;
     const activeUsers = users.filter(user => user.status === 'active').length;
-    const pendingApplications = applications.filter(app => app.status === 'pending').length;
-    const verifiedCaregivers = applications.filter(app => app.status === 'hired').length;
+    const pendingApplications = applications.filter(app => app.stageStatus === 'pending_review').length;
+    const verifiedCaregivers = applications.filter(app => app.stageStatus === 'approved').length;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

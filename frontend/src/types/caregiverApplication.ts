@@ -12,6 +12,7 @@ export type StageStatus = 'not_submitted' | 'pending_review' | 'rejected' | 'app
 export interface CaregiverApplication {
     _id: string;
     userId: string;
+    recipientId: string;
     currentStage: ApplicationStage;
     stageStatus: StageStatus;
     yearsExperience?: number;

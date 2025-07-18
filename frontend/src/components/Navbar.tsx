@@ -41,14 +41,14 @@ export default function Navbar() {
     const fetchProfile = async () => {
       try {
         await getProfile();
-        
+
       } catch (error) {
-        
+
       }
     };
     fetchProfile();
   }, []);
-  
+
   const handleScrollTo = (selector: string) => {
     const element = document.querySelector(selector);
     if (element) {
@@ -195,7 +195,7 @@ export default function Navbar() {
               <>
                 {isAuthenticated && user ? (
                   <div className="mt-6">
-                    <UserDropdown/>
+                    <UserDropdown />
                   </div>
                 ) : (
                   <>
