@@ -76,11 +76,11 @@ export const PaymentSettingsTab = () => {
                         </Dialog>
                     </div>
 
-                    <div className="flex justify-end">
+                    {/* <div className="flex justify-end">
                         <Button>
                             Save Payment Settings
                         </Button>
-                    </div>
+                    </div> */}
                 </CardContent>
             </Card>
         </div>

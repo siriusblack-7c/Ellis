@@ -64,7 +64,7 @@ export function ApplicationsTab() {
     });
 
     const statusMutation = useMutation({
-        mutationFn: ({ applicationId, status }: { applicationId: string; status: string }) =>
+        mutationFn: ({ applicationId, status }: { applicationId: string; status: 'approve' | 'reject' }) =>
             updateAdminApplicationStatus(applicationId, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['adminApplications'] });
@@ -100,7 +100,7 @@ export function ApplicationsTab() {
                 setIsDetailsDialogOpen(true);
             }
         } else {
-            statusMutation.mutate({ applicationId, status: action });
+            statusMutation.mutate({ applicationId, status: action as 'approve' | 'reject' });
         }
     };
 
@@ -129,7 +129,7 @@ export function ApplicationsTab() {
     const filteredApplications = applications
         .filter(
             (app) => {
-                const statusMatch = filterStatus === "all" || app.status === filterStatus;
+                const statusMatch = filterStatus === "all" || app.stageStatus === filterStatus;
                 const locationMatch = !filterLocation || (app.preferredWorkLocation && app.preferredWorkLocation.toLowerCase().includes(filterLocation.toLowerCase()));
                 const dateMatch = !filterDate || !filterDate.from || (
                     new Date(app.createdAt) >= filterDate.from &&
@@ -147,8 +147,8 @@ export function ApplicationsTab() {
                         : getApplicantName(b.userId).localeCompare(getApplicantName(a.userId));
                 case 'status':
                     return isAsc
-                        ? a.status.localeCompare(b.status)
-                        : b.status.localeCompare(a.status);
+                        ? a.stageStatus.localeCompare(b.stageStatus)
+                        : b.stageStatus.localeCompare(a.stageStatus);
                 case 'createdAt':
                     return isAsc
                         ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -308,21 +308,21 @@ export function ApplicationsTab() {
                             <TableCell>
                                 <Badge
                                     variant={
-                                        app.status === "hired"
+                                        app.stageStatus === "approved"
                                             ? "default"
-                                            : app.status === "pending"
+                                            : app.stageStatus === "pending_review"
                                                 ? "secondary"
                                                 : "destructive"
                                     }
                                 >
-                                    {app.status}
+                                    {app.stageStatus}
                                 </Badge>
                             </TableCell>
                             <TableCell>
                                 {new Date(app.createdAt).toLocaleDateString()}
                             </TableCell>
                             <TableCell className="text-right">
-                                <DropdownMenu>
+                                <DropdownMenu modal={false}>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0">
                                             <span className="sr-only">Open menu</span>
@@ -367,7 +367,7 @@ export function ApplicationsTab() {
                                     <h3 className="font-semibold text-lg mb-2">Application Information</h3>
                                     <div className="grid grid-cols-3 gap-x-4 gap-y-2">
                                         <Label className="text-right font-semibold">Status:</Label>
-                                        <span className="col-span-2">{selectedApplicationForDetails.status}</span>
+                                        <span className="col-span-2">{selectedApplicationForDetails.stageStatus}</span>
 
                                         <Label className="text-right font-semibold">Applied On:</Label>
                                         <span className="col-span-2">{new Date(selectedApplicationForDetails.createdAt).toLocaleDateString()}</span>
