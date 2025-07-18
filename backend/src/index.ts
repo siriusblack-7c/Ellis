@@ -11,6 +11,7 @@ import careRecipientRoutes from './routes/careRecipientRoutes';
 import caregiverApplicationRoutes from './routes/caregiverApplicationRoutes';
 import careBookingRoutes from './routes/careBookingRoutes';
 import adminRoutes from './routes/adminRoutes';
+import messageRoutes from './routes/messageRoutes';
 import { protect } from './middlewares/authMiddleware';
 
 dotenv.config();
@@ -48,6 +49,7 @@ app.use('/api/care-recipients', careRecipientRoutes);
 app.use('/api/applications', caregiverApplicationRoutes);
 app.use('/api/care-bookings', careBookingRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
     res.send('Server is healthy and running!');

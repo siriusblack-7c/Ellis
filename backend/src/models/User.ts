@@ -14,9 +14,20 @@ export interface IUser extends Document {
     phoneNumber?: string;
     role: UserRole;
     status: UserStatus;
+    messages: {
+        message: string;
+        seen: boolean;
+        createdAt: Date;
+    }[];
     createdAt: Date;
     updatedAt: Date;
 }
+
+const MessageSchema: Schema = new Schema({
+    message: { type: String, required: true },
+    seen: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now },
+});
 
 const UserSchema: Schema = new Schema(
     {
@@ -38,11 +49,14 @@ const UserSchema: Schema = new Schema(
         role: { type: String, enum: ['client', 'caregiver', 'admin'], default: 'client' },
         status: { type: String, enum: ['active', 'pending', 'blocked'], default: 'active' },
         tags: { type: [String] },
+        messages: { type: [MessageSchema], default: [] },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
     },
     { timestamps: true }
 );
+
+
 
 UserSchema.pre<IUser>('save', async function (next) {
     if (!this.isModified('password') || !this.password) {

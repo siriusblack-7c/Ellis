@@ -1,44 +1,23 @@
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User } from "@/types/user";
 import { MoreHorizontal, Download, Mail, ArrowUp, ArrowDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAdminUsers, updateAdminUserStatus, addAdminUserTag } from "@/api/adminApi";
 import { useToast } from "@/components/ui/use-toast";
 import Papa from 'papaparse';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useAdmin } from "@/hooks/useAdmin";
 
 export function UserManagementTab() {
+  const { sendMessage } = useAdmin();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -92,6 +71,8 @@ export function UserManagementTab() {
   const [sortDirection, setSortDirection] = useState("desc");
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedUserForDetails, setSelectedUserForDetails] = useState<User | null>(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactMessage, setContactMessage] = useState("");
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -173,7 +154,26 @@ export function UserManagementTab() {
   };
 
   const onContact = () => {
-    console.log("Contacting users");
+    if (selectedUsers.length === 0) {
+      toast({
+        title: "No Users Selected",
+        description: "Please select at least one user to contact.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsContactModalOpen(true);
+  };
+
+  const handleSendMessage = async () => {
+    try {
+      sendMessage({ recipientIds: selectedUsers, message: contactMessage });
+     
+      setIsContactModalOpen(false);
+      setContactMessage("");
+    } catch (error) {
+     
+    }
   };
 
   const filteredUsers = users
@@ -394,6 +394,33 @@ export function UserManagementTab() {
               })}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Contact Users</DialogTitle>
+            <DialogDescription>
+              You are about to send a message to {selectedUsers.length} selected user(s).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <Textarea
+              placeholder="Type your message here..."
+              value={contactMessage}
+              onChange={(e) => setContactMessage(e.target.value)}
+              rows={5}
+            />
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsContactModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSendMessage}>Send Message</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

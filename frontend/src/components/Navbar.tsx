@@ -1,14 +1,23 @@
 
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Logo from "./Logo";
 import UserDropdown from "./UserDropdown";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
+import { getMessages, markMessagesAsSeen } from "@/api/messageApi";
+import { Badge } from "@/components/ui/badge";
 
 export default function Navbar() {
   const { t } = useLanguage();
@@ -18,8 +27,35 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const isHomePage = location.pathname === "/";
+  const [messages, setMessages] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Mock user state - REMOVED
+  const fetchMessages = async () => {
+    if (isAuthenticated) {
+      try {
+        const userMessages = await getMessages();
+        setMessages(userMessages);
+        setUnreadCount(userMessages.filter((m) => !m.seen).length);
+      } catch (error) {
+        console.error("Failed to fetch messages", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, [isAuthenticated]);
+
+  const handleOpenNotifications = async () => {
+    if (unreadCount > 0) {
+      try {
+        await markMessagesAsSeen();
+        setUnreadCount(0);
+      } catch (error) {
+        console.error("Failed to mark messages as seen", error);
+      }
+    }
+  };
 
   const navLinks = [
     { name: "Home", path: "/#home" },
@@ -115,6 +151,36 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden md:flex items-center space-x-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full relative" onClick={handleOpenNotifications}>
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge className="absolute top-0 right-0 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full bg-red-500 text-white">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Notifications</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4 space-y-2">
+                {messages.length > 0 ? (
+                  messages.map((msg) => (
+                    <div key={msg._id} className="p-2 border-b">
+                      <p className="font-semibold">Admin</p>
+                      <p>{msg.message}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(msg.createdAt).toLocaleString()}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p>No new notifications</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
           <ThemeToggle />
           {!loading && (
             <>
@@ -136,6 +202,36 @@ export default function Navbar() {
 
         {/* Mobile Navigation */}
         <div className="md:hidden flex items-center space-x-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full relative" onClick={handleOpenNotifications}>
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge className="absolute top-0 right-0 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full bg-red-500 text-white">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Notifications</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4 space-y-2">
+                {messages.length > 0 ? (
+                  messages.map((msg) => (
+                    <div key={msg._id} className="p-2 border-b">
+                      <p className="font-semibold">Admin</p>
+                      <p>{msg.message}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(msg.createdAt).toLocaleString()}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p>No new notifications</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
           <ThemeToggle />
           <Button
             variant="ghost"

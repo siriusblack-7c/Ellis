@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAdminApplications, getAdminUsers, updateAdminApplicationStatus, updateAdminUserStatus } from "@/api/adminApi";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "./useAuth";
+import { sendMessage } from "@/api/messageApi";
 
 export const useAdmin = () => {
     const queryClient = useQueryClient();
@@ -74,6 +75,23 @@ export const useAdmin = () => {
         }
     });
 
+    const sendMessageMutation = useMutation({
+        mutationFn: ({ recipientIds, message }: { recipientIds: string[], message: string }) => sendMessage(recipientIds, message),
+        onSuccess: () => {
+            toast({
+                title: "Message sent",
+                description: "The message has been sent successfully.",
+            });
+        },
+        onError: () => {
+            toast({
+                title: "Error",
+                description: "Failed to send message.",
+                variant: "destructive",
+            });
+        }
+    });
+
     return {
         users,
         isLoadingUsers,
@@ -81,6 +99,7 @@ export const useAdmin = () => {
         isLoadingApplications,
         updateApplicationStatus: applicationStatusMutation.mutate,
         updateUserStatus: userStatusMutation.mutate,
-        adminLogin: adminLoginHook
+        adminLogin: adminLoginHook,
+        sendMessage: sendMessageMutation.mutate
     };
 }; 
