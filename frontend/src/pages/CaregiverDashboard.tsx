@@ -13,6 +13,7 @@ import { getMyApplication } from "@/api/caregiverApplicationApi";
 import { CaregiverApplication, ApplicationStage } from "@/types/caregiverApplication";
 import { useAuth } from "@/hooks/useAuth";
 import CaregiverApplicationPrompt from "@/components/client-dashboard/CaregiverApplicationPrompt";
+import { toast } from "@/components/ui/use-toast";
 
 const stageToStepMap: { [key in ApplicationStage]?: number } = {
   interview: 2,
@@ -36,7 +37,6 @@ export default function CaregiverDashboard() {
       try {
         const response = await getMyApplication();
         setApplication(response);
-        console.log(response, 'response');
         if (response) {
           const step = stageToStepMap[response.currentStage];
           if (step) {
@@ -49,8 +49,11 @@ export default function CaregiverDashboard() {
         if (error.response?.status === 404 && user?.role === 'caregiver') {
           navigate('/application/step-1');
         } else {
-          console.error("Failed to fetch application", error);
-        }
+          toast({
+            title: "Error",
+            description: "Failed to fetch application",
+          });
+          }
       } finally {
         setLoading(false);
       }
@@ -74,12 +77,10 @@ export default function CaregiverDashboard() {
   };
 
   const handleSubmitReport = () => {
-    console.log("Daily report submitted:", reportText);
     setReportText("");
   };
 
   const handleComplaintResponse = (complaintId: string, response: string) => {
-    console.log("Response to complaint:", complaintId, response);
   };
 
   if (loading) {

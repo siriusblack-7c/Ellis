@@ -32,6 +32,7 @@ import { getAdminApplications, updateAdminApplicationStatus, getAdminUsers } fro
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import Papa from 'papaparse';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DateRange } from "react-day-picker";
@@ -115,7 +116,51 @@ export function ApplicationsTab() {
     };
 
     const onExport = () => {
-        console.log("Exporting applications");
+        if (filteredApplications.length === 0) {
+            toast({
+                title: "No applications to export",
+                description: "There are no applications matching the current filters.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const csvData = filteredApplications.map(app => {
+            const user = users.find(u => u._id === app.userId);
+            return {
+                "Application ID": app._id,
+                "Applicant Name": user ? `${user.firstName} ${user.lastName}` : "Unknown",
+                "Applicant Email": user ? user.email : "Unknown",
+                "Stage": app.currentStage,
+                "Status": app.stageStatus,
+                "Submitted At": new Date(app.createdAt).toLocaleDateString(),
+                "Years of Experience": app.yearsExperience,
+                "Preferred Location": app.preferredWorkLocation,
+                "Availability (Weekends)": app.availability.weekends ? 'Yes' : 'No',
+                "Availability (Nights)": app.availability.nights ? 'Yes' : 'No',
+                "Specialties": app.specialties?.join(', '),
+                "Certifications": app.certifications?.join(', '),
+                "Resume/CV": app.cvUrl,
+                "Cover Letter": app.coverLetter,
+                "Certification Files": app.certificationFilesUrls?.join(', '),
+                "Video Interview": app.videoInterviewUrl,
+                "Admin Notes": app.adminNotes,
+                "Training Agreement Accepted": app.trainingAgreementAccepted ? 'Yes' : 'No',
+                "Internship Selection": app.internshipSelection,
+                "Career Path Selection": app.careerPathSelection,
+            }
+        });
+
+        const csv = Papa.unparse(csvData);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'applications.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const onContact = () => {
@@ -126,6 +171,10 @@ export function ApplicationsTab() {
         const user = users.find((u) => u._id === userId);
         return user ? `${user.firstName} ${user.lastName}` : "Unknown Applicant";
     };
+
+    const getApplicantDetails = (userId: string) => {
+        return users.find((u) => u._id === userId);
+    }
 
     const filteredApplications = applications
         .filter(
@@ -381,60 +430,61 @@ export function ApplicationsTab() {
                 </TableBody>
             </Table>
             {selectedApplicationForDetails && (() => {
-                const applicant = users.find(u => u._id === selectedApplicationForDetails.userId);
-                const applicantName = applicant ? `${applicant.firstName} ${applicant.lastName}` : "Unknown Applicant";
                 return (
                     <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
                         <DialogContent className="sm:max-w-[600px]">
                             <DialogHeader>
                                 <DialogTitle>Application Details</DialogTitle>
                                 <DialogDescription>
-                                    Full application details for {applicantName}.
+                                    Full details for the application.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="grid gap-6 py-4">
-                                <div>
-                                    <h3 className="font-semibold text-lg mb-2">Application Information</h3>
-                                    <div className="grid grid-cols-3 gap-x-4 gap-y-2">
-                                        <Label className="text-right font-semibold">Stage:</Label>
-                                        <span className="col-span-2">{selectedApplicationForDetails.currentStage}</span>
+                            {selectedApplicationForDetails && (
+                                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                                    <div>
+                                        <h3 className="font-bold text-lg mb-2">Applicant Information</h3>
+                                        {getApplicantDetails(selectedApplicationForDetails.userId)
+                                            ? Object.entries(getApplicantDetails(selectedApplicationForDetails.userId)!).map(([key, value]) => {
+                                                if (key === 'password' || key.startsWith('_')) return null;
+                                                const displayValue = Array.isArray(value) ? value.join(', ') : String(value);
+                                                return (
+                                                    <div key={key} className="grid grid-cols-3 gap-2 text-sm">
+                                                        <span className="font-semibold capitalize col-span-1">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                                                        <span className="col-span-2">{displayValue || 'N/A'}</span>
+                                                    </div>
+                                                );
+                                            })
+                                            : <p>User details not found.</p>
+                                        }
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg mt-4 mb-2">Application Data</h3>
+                                        {Object.entries(selectedApplicationForDetails).map(([key, value]) => {
+                                            if (key.startsWith('_') || key === 'userId') return null;
 
-                                        <Label className="text-right font-semibold">Status:</Label>
-                                        <span className="col-span-2">{selectedApplicationForDetails.stageStatus}</span>
+                                            let displayValue;
+                                            if (key === 'availability') {
+                                                displayValue = `Weekends: ${value.weekends ? 'Yes' : 'No'}, Nights: ${value.nights ? 'Yes' : 'No'}`;
+                                            } else {
+                                                displayValue = Array.isArray(value)
+                                                    ? value.join(', ')
+                                                    : typeof value === 'boolean'
+                                                        ? value ? 'Yes' : 'No'
+                                                        : (key.includes('Date') || key.includes('At')) && typeof value === 'string'
+                                                            ? new Date(value).toLocaleString()
+                                                            : String(value);
+                                            }
 
-                                        <Label className="text-right font-semibold">Applied On:</Label>
-                                        <span className="col-span-2">{new Date(selectedApplicationForDetails.createdAt).toLocaleDateString()}</span>
-
-                                        <Label className="text-right font-semibold">Preferred Location:</Label>
-                                        <span className="col-span-2">{selectedApplicationForDetails.preferredWorkLocation}</span>
-
-                                        <Label className="text-right font-semibold">Availability:</Label>
-                                        <span className="col-span-2">
-                                            {selectedApplicationForDetails.availability.weekends && 'Weekends '}
-                                            {selectedApplicationForDetails.availability.nights && 'Nights'}
-                                        </span>
+                                            return (
+                                                <div key={key} className="grid grid-cols-3 gap-2 text-sm">
+                                                    <span className="font-semibold capitalize col-span-1">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                                                    <span className="col-span-2">{displayValue || 'N/A'}</span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
-
-                                {applicant && (
-                                    <div>
-                                        <h3 className="font-semibold text-lg mt-4 mb-2">Applicant Information</h3>
-                                        <div className="grid grid-cols-3 gap-x-4 gap-y-2">
-                                            <Label className="text-right font-semibold">Name:</Label>
-                                            <span className="col-span-2">{applicantName}</span>
-
-                                            <Label className="text-right font-semibold">Email:</Label>
-                                            <span className="col-span-2">{applicant.email}</span>
-
-                                            <Label className="text-right font-semibold">Phone:</Label>
-                                            <span className="col-span-2">{applicant.phoneNumber}</span>
-
-                                            <Label className="text-right font-semibold">Bio:</Label>
-                                            <span className="col-span-2">{applicant.bio}</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                            )}
                         </DialogContent>
                     </Dialog>
                 )

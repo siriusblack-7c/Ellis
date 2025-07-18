@@ -119,7 +119,7 @@ export default function Navbar() {
           {!loading && (
             <>
               {isAuthenticated && user ? (
-                <UserDropdown user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, avatar: user.avatar }} />
+                <UserDropdown />
               ) : (
                 <>
                   <Button asChild className="btn-primary">
@@ -195,7 +195,7 @@ export default function Navbar() {
               <>
                 {isAuthenticated && user ? (
                   <div className="mt-6">
-                    <UserDropdown user={{ name: `${user.firstName} ${user.lastName}`, email: user.email, avatar: user.avatar }} />
+                    <UserDropdown/>
                   </div>
                 ) : (
                   <>

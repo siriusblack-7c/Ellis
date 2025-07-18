@@ -14,6 +14,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import CareRecipients from "./pages/CareRecipients";
 import MyBookings from "./pages/MyBookings";
+import PaymentThankYou from './pages/PaymentThankYou';
 import BookCare from "./pages/BookCare";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/care-recipients" element={<CareRecipients />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/payment-thank-you" element={<PaymentThankYou />} />
           <Route path="/book-care" element={<BookCare />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/caregiver-dashboard" element={<CaregiverDashboard />} />

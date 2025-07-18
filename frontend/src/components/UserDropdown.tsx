@@ -13,18 +13,10 @@ import {
 import { User, Settings, Heart, Calendar, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
-interface UserDropdownProps {
-  user: {
-    name: string;
-    email: string;
-    avatar?: string;
-  };
-}
-
-export default function UserDropdown({ user }: UserDropdownProps) {
+export default function UserDropdown() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { logout } = useAuth();
-
   const handleLogout = () => {
     logout(); // logout user
     navigate("/");
@@ -39,17 +31,17 @@ export default function UserDropdown({ user }: UserDropdownProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            {user.avatar && <AvatarImage src={`http://localhost:5001${user.avatar}`} alt={user.name} />}
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {getInitials(user.name)}
-            </AvatarFallback>
+            {user.avatar ? <AvatarImage src={`${import.meta.env.VITE_API_BASE_URL}${user.avatar}`} alt={`${user.firstName} ${user.lastName}`} />
+            :<AvatarFallback className="bg-primary text-primary-foreground">
+              {getInitials(`${user.firstName} ${user.lastName}`)}
+            </AvatarFallback>}
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-sm font-medium leading-none">{`${user.firstName} ${user.lastName}`}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>
@@ -62,18 +54,20 @@ export default function UserDropdown({ user }: UserDropdownProps) {
             <span>My Profile</span>
           </Link>
         </DropdownMenuItem>
+        {user.role === 'client' && (
         <DropdownMenuItem asChild>
           <Link to="/care-recipients" className="cursor-pointer">
             <Heart className="mr-2 h-4 w-4" />
             <span>My Recipients</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+        )}
+        {/* <DropdownMenuItem asChild>
           <Link to="/my-bookings" className="cursor-pointer">
             <Calendar className="mr-2 h-4 w-4" />
             <span>My Bookings</span>
           </Link>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         <DropdownMenuItem asChild>
           <Link to="/settings" className="cursor-pointer">
             <Settings className="mr-2 h-4 w-4" />

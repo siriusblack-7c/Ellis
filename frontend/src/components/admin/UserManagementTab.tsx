@@ -29,6 +29,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAdminUsers, updateAdminUserStatus, addAdminUserTag } from "@/api/adminApi";
 import { useToast } from "@/components/ui/use-toast";
+import Papa from 'papaparse';
 import {
   Dialog,
   DialogContent,
@@ -130,7 +131,45 @@ export function UserManagementTab() {
   };
 
   const onExport = () => {
-    console.log("Exporting users");
+    if (filteredUsers.length === 0) {
+      toast({
+        title: "No users to export",
+        description: "There are no users matching the current filters.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const csvData = filteredUsers.map(user => ({
+      "ID": user._id,
+      "First Name": user.firstName,
+      "Last Name": user.lastName,
+      "Email": user.email,
+      "Phone Number": user.phoneNumber,
+      "Role": user.role,
+      "Status": user.status,
+      "Gender": user.gender,
+      "Bio": user.bio,
+      "Country": user.country,
+      "Address": user.address1,
+      "City": user.city,
+      "State": user.state,
+      "Zip": user.zip,
+      "Birth Date": user.birthDate ? new Date(user.birthDate).toLocaleDateString() : 'N/A',
+      "Joined At": new Date(user.createdAt).toLocaleDateString(),
+      "Tags": user.tags?.join(', ')
+    }));
+
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'users.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const onContact = () => {
@@ -325,59 +364,38 @@ export function UserManagementTab() {
           ))}
         </TableBody>
       </Table>
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>
+              Full details for {selectedUserForDetails?.firstName} {selectedUserForDetails?.lastName}.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUserForDetails && (
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+              {Object.entries(selectedUserForDetails).map(([key, value]) => {
+                if (key === 'password' || key.startsWith('_')) return null; // Don't show password or internal fields
 
-      {selectedUserForDetails && (
-        <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>User Details</DialogTitle>
-              <DialogDescription>
-                Detailed information for {selectedUserForDetails.firstName} {selectedUserForDetails.lastName}.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold">Name:</span>
-                <span className="col-span-3">{selectedUserForDetails.firstName} {selectedUserForDetails.lastName}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold">Email:</span>
-                <span className="col-span-3">{selectedUserForDetails.email}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold">Phone:</span>
-                <span className="col-span-3">{selectedUserForDetails.phoneNumber}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold">Address:</span>
-                <span className="col-span-3">
-                  {selectedUserForDetails.address1}, {selectedUserForDetails.city}, {selectedUserForDetails.state} {selectedUserForDetails.zip}, {selectedUserForDetails.country}
-                </span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold">Role:</span>
-                <span className="col-span-3">{selectedUserForDetails.role}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold">Status:</span>
-                <span className="col-span-3">{selectedUserForDetails.status}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold">Joined:</span>
-                <span className="col-span-3">{new Date(selectedUserForDetails.createdAt).toLocaleDateString()}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold">Tags:</span>
-                <span className="col-span-3">{selectedUserForDetails.tags.join(', ')}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-right font-semibold">Bio:</span>
-                <span className="col-span-3">{selectedUserForDetails.bio}</span>
-              </div>
+                const displayValue = Array.isArray(value)
+                  ? value.join(', ')
+                  : typeof value === 'boolean'
+                    ? value ? 'Yes' : 'No'
+                    : (key.includes('Date') || key.includes('At')) && typeof value === 'string'
+                      ? new Date(value).toLocaleString()
+                      : String(value);
+
+                return (
+                  <div key={key} className="grid grid-cols-3 gap-2 text-sm">
+                    <span className="font-semibold capitalize col-span-1">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                    <span className="col-span-2">{displayValue || 'N/A'}</span>
+                  </div>
+                );
+              })}
             </div>
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
