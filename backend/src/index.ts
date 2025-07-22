@@ -34,7 +34,7 @@ const port = process.env.PORT || 5001;
 
 app.use(cors(
     {
-        origin: ["https://ellis-eight.vercel.app", "https://ellis-care.vercel.app", "http://localhost:5173", "http://localhost:8080"],
+        origin: "*",
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
         credentials: true
