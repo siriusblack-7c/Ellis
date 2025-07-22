@@ -3,6 +3,7 @@ import { OAuth2Client } from 'google-auth-library';
 import * as userDataAccess from '../data-access/user';
 import { IUser } from '../models/User';
 import config from '../config';
+import { sendWelcomeEmail } from '../utils/mailer';
 
 const client = new OAuth2Client(config.googleClientId);
 
@@ -34,6 +35,8 @@ export const register = async (userData: Partial<IUser>) => {
     const user = await userDataAccess.createUser({ firstName, lastName, email, password, phoneNumber, role });
 
     if (user) {
+        // await sendWelcomeEmail(user.email, user.firstName);
+
         return {
             _id: user._id,
             firstName: user.firstName,
@@ -101,6 +104,7 @@ export const googleLogin = async (token: string) => {
                 lastName: lastName!,
                 password: `google-${googleId}` // Dummy password for Google users
             });
+            // await sendWelcomeEmail(user.email, user.firstName);
         }
     }
 

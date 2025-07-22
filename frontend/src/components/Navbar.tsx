@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function Navbar() {
   const { t } = useLanguage();
-  const { isAuthenticated, user, loading, getProfile } = useAuth();
+  const { isAuthenticated, user, loading, getProfile, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -79,7 +79,8 @@ export default function Navbar() {
         await getProfile();
 
       } catch (error) {
-
+        console.error("Failed to fetch profile", error);
+        await logout();
       }
     };
     fetchProfile();
@@ -151,6 +152,8 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden md:flex items-center space-x-2">
+          {
+            isAuthenticated && user ? (
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full relative" onClick={handleOpenNotifications}>
@@ -180,7 +183,10 @@ export default function Navbar() {
                 )}
               </div>
             </DialogContent>
-          </Dialog>
+          </Dialog>) : (
+            <></>
+          )
+          }
           <ThemeToggle />
           {!loading && (
             <>
@@ -189,7 +195,7 @@ export default function Navbar() {
               ) : (
                 <>
                   <Button asChild className="btn-primary">
-                    <Link to="/auth">Sign In</Link>
+                    <Link to="/auth?mode=signin">Login/Register</Link>
                   </Button>
                   {/* <Button asChild className="btn-primary">
                     <Link to="/auth?mode=signup">Register</Link>
@@ -202,9 +208,11 @@ export default function Navbar() {
 
         {/* Mobile Navigation */}
         <div className="md:hidden flex items-center space-x-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full relative" onClick={handleOpenNotifications}>
+          {
+            isAuthenticated && user ? (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full relative" onClick={handleOpenNotifications}>
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <Badge className="absolute top-0 right-0 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full bg-red-500 text-white">
@@ -232,6 +240,10 @@ export default function Navbar() {
               </div>
             </DialogContent>
           </Dialog>
+          ) : (
+            <></>
+          )
+          }
           <ThemeToggle />
           <Button
             variant="ghost"
@@ -297,14 +309,14 @@ export default function Navbar() {
                   <>
                     <Button asChild className="w-full btn-primary mt-6">
                       <Link to="/auth?mode=signin" onClick={() => setMobileMenuOpen(false)}>
-                        Login
+                        Login/Register
                       </Link>
                     </Button>
-                    <Button asChild className="w-full btn-primary mt-6">
+                    {/* <Button asChild className="w-full btn-primary mt-6">
                       <Link to="/auth?mode=signup" onClick={() => setMobileMenuOpen(false)}>
                         Register
-                      </Link>
-                    </Button>
+                    </Link>
+                    </Button> */}
                   </>
                 )}
               </>

@@ -18,6 +18,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getClientApplications } from "@/api/adminApi";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { sendMessage } from "@/api/messageApi";
 
 export function ClientApplicationsTab() {
     const { toast } = useToast();
@@ -26,6 +28,8 @@ export function ClientApplicationsTab() {
     const [sortDirection, setSortDirection] = useState("desc");
     const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
     const [selectedApplicationForDetails, setSelectedApplicationForDetails] = useState<CareRecipient | null>(null);
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [contactMessage, setContactMessage] = useState("");
 
     const { data: applications = [], isLoading } = useQuery<CareRecipient[]>({
         queryKey: ['clientApplications'],
@@ -54,6 +58,53 @@ export function ClientApplicationsTab() {
     const handleViewDetails = (application: CareRecipient) => {
         setSelectedApplicationForDetails(application);
         setIsDetailsDialogOpen(true);
+    };
+
+    const onContact = () => {
+        if (selectedApplications.length === 0) {
+            toast({
+                title: "No Applications Selected",
+                description: "Please select at least one application to contact.",
+                variant: "destructive",
+            });
+            return;
+        }
+        setIsContactModalOpen(true);
+    };
+
+    const handleSendMessage = async () => {
+        const recipientIds = selectedApplications.map(appId => {
+            const app = applications.find(a => a._id === appId);
+            if (app && app.clientId && typeof app.clientId !== 'string') {
+                return app.clientId._id;
+            }
+            return null;
+        }).filter((id): id is string => id !== null);
+
+        if (recipientIds.length === 0) {
+            toast({
+                title: "Error",
+                description: "Could not find clients for the selected applications.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            await sendMessage(recipientIds, contactMessage);
+            toast({
+                title: "Message Sent",
+                description: `Message sent to ${recipientIds.length} client(s).`,
+            });
+            setIsContactModalOpen(false);
+            setContactMessage("");
+        } catch (error) {
+            toast({
+                title: "Error sending message",
+                description: "There was an issue sending the message.",
+                variant: "destructive",
+            });
+        }
     };
 
     const sortedApplications = [...applications].sort((a, b) => {
@@ -96,7 +147,7 @@ export function ClientApplicationsTab() {
                         <Download className="h-4 w-4 mr-2" />
                         Export
                     </Button>
-                    <Button>
+                    <Button onClick={onContact}>
                         <Mail className="h-4 w-4 mr-2" />
                         Contact
                     </Button>
@@ -241,6 +292,33 @@ export function ClientApplicationsTab() {
                             )}
                         </div>
                     )}
+                </DialogContent>
+            </Dialog>
+            <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Contact Clients</DialogTitle>
+                        <DialogDescription>
+                            You are about to send a message to {selectedApplications.length} selected client(s).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-4">
+                        <Textarea
+                            placeholder="Type your message here..."
+                            value={contactMessage}
+                            onChange={(e) => setContactMessage(e.target.value)}
+                            rows={5}
+                        />
+                    </div>
+                    <div className="mt-4 flex justify-end gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsContactModalOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSendMessage}>Send Message</Button>
+                    </div>
                 </DialogContent>
             </Dialog>
         </TabsContent>
