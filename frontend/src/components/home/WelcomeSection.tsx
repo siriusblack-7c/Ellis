@@ -12,7 +12,7 @@ export default function WelcomeSection() {
               Welcome to Ellis
             </span>
             <h2 className="text-3xl md:text-4xl font-bold mt-2 mb-6">
-              Send trusted caregivers to your parents from anywhere in the world.
+              Global In-Home Care, Delivered with Compassion
             </h2>
             <p className="text-muted-foreground mb-6">
               We connect families worldwide with professionally trained personal

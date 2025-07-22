@@ -57,7 +57,7 @@ export default function Navbar() {
     }
   };
 
-  const navLinks = [
+  const navLinks = isAuthenticated && user ? [
     { name: "Home", path: "/#home" },
     { name: "How It Works", path: "/#how-it-works" },
     { name: "FAQs", path: "/#faq" },
@@ -67,10 +67,19 @@ export default function Navbar() {
     { name: "Careers", path: "/careers" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
-    { name: "Dashboard", path: user?.role === "admin" ? "/admin" : user?.role === "caregiver" ? "/caregiver-dashboard" : "/client-dashboard" },
+    { name: "Dashboard", path: user?.role === "admin" ? "/admin" : user?.role === "caregiver" ? "/caregiver-dashboard" : user?.role === "client" ? "/client-dashboard" : "/auth" },
     // { name: "Caregivers Dashboard", path: "/caregiver-dashboard" },
     // { name: "Clients Dashboard", path: "/client-dashboard" },
     // { name: "Admin Dashboard", path: "/admin" },
+  ] : [
+    { name: "Home", path: "/#home" },
+    { name: "How It Works", path: "/#how-it-works" },
+    { name: "FAQs", path: "/#faq" },
+    { name: "Services", path: "/#services" },
+    { name: "Caregivers", path: "/caregivers" },
+    { name: "Careers", path: "/careers" },
+    { name: "About", path: "/about" },
+    { name: "Contact", path: "/contact" },
   ];
 
   useEffect(() => {

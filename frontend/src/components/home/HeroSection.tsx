@@ -50,12 +50,10 @@ export default function HeroSection() {
             Welcome to Ellis
           </span>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-            Global In-Home Care, Delivered with Compassion
+            Send trusted caregivers to your parents from anywhere in the world.
           </h1>
           <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
-            Book professional personal support workers and caregivers for your
-            loved ones anywhere in the world. Monitor care remotely and ensure
-            quality support in the comfort of their own home.
+            We provide trusted and certified caregivers working across 21 countries, book caregivers for your parents and loved ones in your home country and monitor our service delivery from anywhere in the world.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
